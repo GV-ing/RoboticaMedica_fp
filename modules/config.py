@@ -33,8 +33,8 @@ NOMINAL_PARAMS = {
     "switched_mode": False,     # False: config (a) k fissa; True: config (b) due livelli
 
     # Attuazione e Controllo
-    "u_step": 0.35,             # Passo comando motore per pressione tasto [mm]
-    "manual_rate": 2.0,         # Velocita' massima risposta ai comandi manuali [mm/s]
+    "u_step": 0.05,             # Passo comando motore per pressione tasto [mm]
+    "manual_rate": 1.0,         # Velocita' massima risposta ai comandi manuali [mm/s]
     "u_max": 8.0,               # Corsa massima in modo autonomo [mm]
     "auto_rate": 1.0,           # Velocita' di u in modo autonomo [mm/s]
     "F_contact_th": 0.005,      # Soglia rilevamento contatto: 5 mN = 0.005 N
