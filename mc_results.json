@@ -1,0 +1,946 @@
+{
+  "soft_fixed": {
+    "nominal": {
+      "H_Nmm": 8.909601507105997,
+      "contact_fraction": 0.000625,
+      "contact_force_mean_N": 0.0058017971620677325,
+      "contact_force_std_N": 0.0,
+      "target_force_error_mean_N": 0.014198202837932269,
+      "stable": false
+    },
+    "realizations": [
+      {
+        "run_id": 0,
+        "H_Nmm": 8.58378252232967,
+        "contact_fraction": 0.00125,
+        "contact_force_mean_N": 0.006544105169832505,
+        "contact_force_std_N": 0.0016077017631374079,
+        "target_force_error_mean_N": 0.013455894830167497,
+        "stable": false
+      },
+      {
+        "run_id": 1,
+        "H_Nmm": 8.821772140957577,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.005766490417886731,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.01423350958211327,
+        "stable": false
+      },
+      {
+        "run_id": 2,
+        "H_Nmm": 7.673326561520405,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 3,
+        "H_Nmm": 11.683722282789038,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.008672309247091345,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.011327690752908655,
+        "stable": false
+      },
+      {
+        "run_id": 4,
+        "H_Nmm": 6.6932752048234505,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 5,
+        "H_Nmm": 5.984949621505368,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.00601935579715105,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.01398064420284895,
+        "stable": false
+      },
+      {
+        "run_id": 6,
+        "H_Nmm": 7.7018842691673015,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 7,
+        "H_Nmm": 5.695561786062591,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.0057156493060717874,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.014284350693928213,
+        "stable": false
+      },
+      {
+        "run_id": 8,
+        "H_Nmm": 7.051828365286113,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 9,
+        "H_Nmm": 12.58697351475302,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.012071090358198252,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.007928909641801749,
+        "stable": false
+      },
+      {
+        "run_id": 10,
+        "H_Nmm": 4.996356029729181,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 11,
+        "H_Nmm": 10.473292866791077,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.007262312683422866,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.012737687316577134,
+        "stable": false
+      },
+      {
+        "run_id": 12,
+        "H_Nmm": 8.711902393787586,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 13,
+        "H_Nmm": 7.94705203190987,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 14,
+        "H_Nmm": 8.03401919946424,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 15,
+        "H_Nmm": 9.84434468514014,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.006937842773691869,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.013062157226308132,
+        "stable": false
+      },
+      {
+        "run_id": 16,
+        "H_Nmm": 10.467622128649893,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.007436720242285391,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.01256327975771461,
+        "stable": false
+      },
+      {
+        "run_id": 17,
+        "H_Nmm": 10.642914927749388,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.009525569831333026,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.010474430168666974,
+        "stable": false
+      },
+      {
+        "run_id": 18,
+        "H_Nmm": 9.245264229113854,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.008190320045808481,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.01180967995419152,
+        "stable": false
+      },
+      {
+        "run_id": 19,
+        "H_Nmm": 7.754364123536831,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      }
+    ],
+    "summary": {
+      "mean_Nmm": 8.529710444253329,
+      "std_Nmm": 1.9989997702604827,
+      "worst_Nmm": 12.58697351475302,
+      "robustness_index": 1.4127425906438211
+    },
+    "tornado": [
+      {
+        "parameter": "c_spring",
+        "standardized_coefficient": 0.6991523211155343
+      },
+      {
+        "parameter": "yt_offset",
+        "standardized_coefficient": 0.4990441800904642
+      },
+      {
+        "parameter": "E_load",
+        "standardized_coefficient": -0.31235726041078266
+      },
+      {
+        "parameter": "Fh_mat",
+        "standardized_coefficient": 0.2680310871894477
+      },
+      {
+        "parameter": "Fh_spring",
+        "standardized_coefficient": 0.22287273282453468
+      },
+      {
+        "parameter": "k_spring",
+        "standardized_coefficient": 0.032692769170527804
+      },
+      {
+        "parameter": "k_low",
+        "standardized_coefficient": 0.03139125890328017
+      },
+      {
+        "parameter": "E_unload",
+        "standardized_coefficient": 0.030876279784607583
+      },
+      {
+        "parameter": "k_high",
+        "standardized_coefficient": -0.027376496498767503
+      }
+    ]
+  },
+  "soft_switched": {
+    "nominal": {
+      "H_Nmm": 8.914526579411923,
+      "contact_fraction": 0.000625,
+      "contact_force_mean_N": 0.005767895699717298,
+      "contact_force_std_N": 0.0,
+      "target_force_error_mean_N": 0.014232104300282702,
+      "stable": false
+    },
+    "realizations": [
+      {
+        "run_id": 0,
+        "H_Nmm": 8.020124938089445,
+        "contact_fraction": 0.00125,
+        "contact_force_mean_N": 0.006733163245659368,
+        "contact_force_std_N": 0.0019374511674205008,
+        "target_force_error_mean_N": 0.013266836754340632,
+        "stable": false
+      },
+      {
+        "run_id": 1,
+        "H_Nmm": 9.008277958681326,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.005719919700278989,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.014280080299721012,
+        "stable": false
+      },
+      {
+        "run_id": 2,
+        "H_Nmm": 7.7438770848598875,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 3,
+        "H_Nmm": 11.982901296245362,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.00863804595818068,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.011361954041819321,
+        "stable": false
+      },
+      {
+        "run_id": 4,
+        "H_Nmm": 6.2711011863608475,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 5,
+        "H_Nmm": 5.813129448045779,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.005981277835367386,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.014018722164632614,
+        "stable": false
+      },
+      {
+        "run_id": 6,
+        "H_Nmm": 7.587255581032284,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 7,
+        "H_Nmm": 5.550533317395393,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.005691909610879147,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.014308090389120853,
+        "stable": false
+      },
+      {
+        "run_id": 8,
+        "H_Nmm": 6.8655622237051865,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 9,
+        "H_Nmm": 12.861658232515204,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.012045559613222342,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.007954440386777659,
+        "stable": false
+      },
+      {
+        "run_id": 10,
+        "H_Nmm": 4.790269895677211,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 11,
+        "H_Nmm": 10.54789760510636,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.007241186770873249,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.012758813229126751,
+        "stable": false
+      },
+      {
+        "run_id": 12,
+        "H_Nmm": 8.905035346663338,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 13,
+        "H_Nmm": 7.4108164887918875,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 14,
+        "H_Nmm": 7.905273900400422,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      },
+      {
+        "run_id": 15,
+        "H_Nmm": 9.931988031295324,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.0069056749040649,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.0130943250959351,
+        "stable": false
+      },
+      {
+        "run_id": 16,
+        "H_Nmm": 10.263687232459894,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.00739492075822854,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.01260507924177146,
+        "stable": false
+      },
+      {
+        "run_id": 17,
+        "H_Nmm": 10.964798029991655,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.009487542062188612,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.010512457937811389,
+        "stable": false
+      },
+      {
+        "run_id": 18,
+        "H_Nmm": 9.289278396550767,
+        "contact_fraction": 0.000625,
+        "contact_force_mean_N": 0.008167608944667639,
+        "contact_force_std_N": 0.0,
+        "target_force_error_mean_N": 0.011832391055332361,
+        "stable": false
+      },
+      {
+        "run_id": 19,
+        "H_Nmm": 7.30083143267109,
+        "contact_fraction": 0.0,
+        "contact_force_mean_N": null,
+        "contact_force_std_N": null,
+        "target_force_error_mean_N": null,
+        "stable": false
+      }
+    ],
+    "summary": {
+      "mean_Nmm": 8.450714881326933,
+      "std_Nmm": 2.170556210956988,
+      "worst_Nmm": 12.861658232515204,
+      "robustness_index": 1.442775240832101
+    },
+    "tornado": [
+      {
+        "parameter": "c_spring",
+        "standardized_coefficient": 0.717624217549798
+      },
+      {
+        "parameter": "yt_offset",
+        "standardized_coefficient": 0.44268618535451904
+      },
+      {
+        "parameter": "E_load",
+        "standardized_coefficient": -0.3471203606982802
+      },
+      {
+        "parameter": "Fh_mat",
+        "standardized_coefficient": 0.2700892828123721
+      },
+      {
+        "parameter": "Fh_spring",
+        "standardized_coefficient": 0.22546438388264176
+      },
+      {
+        "parameter": "E_unload",
+        "standardized_coefficient": 0.04348682068071428
+      },
+      {
+        "parameter": "k_high",
+        "standardized_coefficient": -0.031625779570219184
+      },
+      {
+        "parameter": "k_spring",
+        "standardized_coefficient": -0.029301340582090947
+      },
+      {
+        "parameter": "k_low",
+        "standardized_coefficient": 0.023110961312578244
+      }
+    ]
+  },
+  "rigid_fixed": {
+    "nominal": {
+      "H_Nmm": 0.1858508161509958,
+      "contact_fraction": 0.855625,
+      "contact_force_mean_N": 0.08046824027537874,
+      "contact_force_std_N": 0.04043143941563725,
+      "target_force_error_mean_N": 0.0614011737599737,
+      "stable": false
+    },
+    "realizations": [
+      {
+        "run_id": 0,
+        "H_Nmm": 0.17194249921182495,
+        "contact_fraction": 0.889375,
+        "contact_force_mean_N": 0.10795160530433891,
+        "contact_force_std_N": 0.054290945953023174,
+        "target_force_error_mean_N": 0.08857598070152566,
+        "stable": false
+      },
+      {
+        "run_id": 1,
+        "H_Nmm": 0.18967624472741956,
+        "contact_fraction": 0.87,
+        "contact_force_mean_N": 0.07742264389974463,
+        "contact_force_std_N": 0.038217480253739944,
+        "target_force_error_mean_N": 0.05833979845935038,
+        "stable": false
+      },
+      {
+        "run_id": 2,
+        "H_Nmm": 0.1890089753008851,
+        "contact_fraction": 0.81125,
+        "contact_force_mean_N": 0.0613721055898917,
+        "contact_force_std_N": 0.03130325134007131,
+        "target_force_error_mean_N": 0.04276767577887988,
+        "stable": false
+      },
+      {
+        "run_id": 3,
+        "H_Nmm": 0.21333681528856407,
+        "contact_fraction": 0.813125,
+        "contact_force_mean_N": 0.08703717297504922,
+        "contact_force_std_N": 0.045229150422432286,
+        "target_force_error_mean_N": 0.06801342128824697,
+        "stable": false
+      },
+      {
+        "run_id": 4,
+        "H_Nmm": 0.17204811463688377,
+        "contact_fraction": 0.883125,
+        "contact_force_mean_N": 0.08016310647978689,
+        "contact_force_std_N": 0.040007807340193796,
+        "target_force_error_mean_N": 0.06103470648029502,
+        "stable": false
+      },
+      {
+        "run_id": 5,
+        "H_Nmm": 0.1612092470747126,
+        "contact_fraction": 0.851875,
+        "contact_force_mean_N": 0.06476588042655657,
+        "contact_force_std_N": 0.0325495190830092,
+        "target_force_error_mean_N": 0.045952368655842325,
+        "stable": false
+      },
+      {
+        "run_id": 6,
+        "H_Nmm": 0.16323177053706,
+        "contact_fraction": 0.84125,
+        "contact_force_mean_N": 0.07725731603551805,
+        "contact_force_std_N": 0.03940314325688296,
+        "target_force_error_mean_N": 0.0582831600787653,
+        "stable": false
+      },
+      {
+        "run_id": 7,
+        "H_Nmm": 0.16084329877588255,
+        "contact_fraction": 0.849375,
+        "contact_force_mean_N": 0.060520147169461934,
+        "contact_force_std_N": 0.03028072989437779,
+        "target_force_error_mean_N": 0.041798138913497235,
+        "stable": false
+      },
+      {
+        "run_id": 8,
+        "H_Nmm": 0.15770392032061784,
+        "contact_fraction": 0.8525,
+        "contact_force_mean_N": 0.07825167895206478,
+        "contact_force_std_N": 0.03969182812938386,
+        "target_force_error_mean_N": 0.05922824384538142,
+        "stable": false
+      },
+      {
+        "run_id": 9,
+        "H_Nmm": 0.2061611082180602,
+        "contact_fraction": 0.814375,
+        "contact_force_mean_N": 0.08452272581209558,
+        "contact_force_std_N": 0.043535764240602584,
+        "target_force_error_mean_N": 0.0655250023576403,
+        "stable": false
+      },
+      {
+        "run_id": 10,
+        "H_Nmm": 0.15123744618268212,
+        "contact_fraction": 0.85375,
+        "contact_force_mean_N": 0.05785571744484125,
+        "contact_force_std_N": 0.028793518916955353,
+        "target_force_error_mean_N": 0.03915121444768576,
+        "stable": false
+      },
+      {
+        "run_id": 11,
+        "H_Nmm": 0.20354007936306379,
+        "contact_fraction": 0.821875,
+        "contact_force_mean_N": 0.08280949897633694,
+        "contact_force_std_N": 0.0426247455013389,
+        "target_force_error_mean_N": 0.06380255699521707,
+        "stable": false
+      },
+      {
+        "run_id": 12,
+        "H_Nmm": 0.20822937496359148,
+        "contact_fraction": 0.795,
+        "contact_force_mean_N": 0.06014738170022555,
+        "contact_force_std_N": 0.030843506674225026,
+        "target_force_error_mean_N": 0.04163552559772244,
+        "stable": false
+      },
+      {
+        "run_id": 13,
+        "H_Nmm": 0.167502448649258,
+        "contact_fraction": 0.885625,
+        "contact_force_mean_N": 0.10178637879089975,
+        "contact_force_std_N": 0.05138133899799134,
+        "target_force_error_mean_N": 0.08247791505466265,
+        "stable": false
+      },
+      {
+        "run_id": 14,
+        "H_Nmm": 0.1940063248141336,
+        "contact_fraction": 0.860625,
+        "contact_force_mean_N": 0.07768404337589996,
+        "contact_force_std_N": 0.039024759775891496,
+        "target_force_error_mean_N": 0.05864830496708874,
+        "stable": false
+      },
+      {
+        "run_id": 15,
+        "H_Nmm": 0.1939336904118766,
+        "contact_fraction": 0.83125,
+        "contact_force_mean_N": 0.08503492593666637,
+        "contact_force_std_N": 0.043714219550401626,
+        "target_force_error_mean_N": 0.06599045463793347,
+        "stable": false
+      },
+      {
+        "run_id": 16,
+        "H_Nmm": 0.19982271630944498,
+        "contact_fraction": 0.87,
+        "contact_force_mean_N": 0.1065467105287471,
+        "contact_force_std_N": 0.05383963235376507,
+        "target_force_error_mean_N": 0.08722077737414798,
+        "stable": false
+      },
+      {
+        "run_id": 17,
+        "H_Nmm": 0.1870167372175578,
+        "contact_fraction": 0.83375,
+        "contact_force_mean_N": 0.07918031863068761,
+        "contact_force_std_N": 0.04006408589533578,
+        "target_force_error_mean_N": 0.06017951876227321,
+        "stable": false
+      },
+      {
+        "run_id": 18,
+        "H_Nmm": 0.1699331887005886,
+        "contact_fraction": 0.84125,
+        "contact_force_mean_N": 0.0745270428006081,
+        "contact_force_std_N": 0.03746751004465161,
+        "target_force_error_mean_N": 0.055578849654066516,
+        "stable": false
+      },
+      {
+        "run_id": 19,
+        "H_Nmm": 0.16721319604416368,
+        "contact_fraction": 0.88125,
+        "contact_force_mean_N": 0.09553134477952155,
+        "contact_force_std_N": 0.04805883851633828,
+        "target_force_error_mean_N": 0.07625973716964943,
+        "stable": false
+      }
+    ],
+    "summary": {
+      "mean_Nmm": 0.18137985983741356,
+      "std_Nmm": 0.019181711187364177,
+      "worst_Nmm": 0.21333681528856407,
+      "robustness_index": 1.1478928083653777
+    },
+    "tornado": [
+      {
+        "parameter": "c_spring",
+        "standardized_coefficient": 0.9917474455644739
+      },
+      {
+        "parameter": "Fh_spring",
+        "standardized_coefficient": 0.3156937141983771
+      },
+      {
+        "parameter": "Fh_mat",
+        "standardized_coefficient": 0.28281812355773756
+      },
+      {
+        "parameter": "E_load",
+        "standardized_coefficient": -0.06887264727682434
+      },
+      {
+        "parameter": "k_spring",
+        "standardized_coefficient": 0.06285497147034648
+      },
+      {
+        "parameter": "yt_offset",
+        "standardized_coefficient": 0.02527620807575852
+      },
+      {
+        "parameter": "E_unload",
+        "standardized_coefficient": 0.01482830804499794
+      },
+      {
+        "parameter": "k_low",
+        "standardized_coefficient": 0.007697200887448878
+      },
+      {
+        "parameter": "k_high",
+        "standardized_coefficient": -0.00044224864001272154
+      }
+    ]
+  },
+  "rigid_switched": {
+    "nominal": {
+      "H_Nmm": 0.1891384473343104,
+      "contact_fraction": 0.96375,
+      "contact_force_mean_N": 0.16730246662056064,
+      "contact_force_std_N": 0.05291073464075431,
+      "target_force_error_mean_N": 0.14750091063703416,
+      "stable": false
+    },
+    "realizations": [
+      {
+        "run_id": 0,
+        "H_Nmm": 0.17494895021187745,
+        "contact_fraction": 0.971875,
+        "contact_force_mean_N": 0.20427375880683038,
+        "contact_force_std_N": 0.06112452284054701,
+        "target_force_error_mean_N": 0.18443330861092486,
+        "stable": false
+      },
+      {
+        "run_id": 1,
+        "H_Nmm": 0.19043241315552328,
+        "contact_fraction": 0.95625,
+        "contact_force_mean_N": 0.13836860788339644,
+        "contact_force_std_N": 0.04759754183656649,
+        "target_force_error_mean_N": 0.11866770668089734,
+        "stable": false
+      },
+      {
+        "run_id": 2,
+        "H_Nmm": 0.1943729206100022,
+        "contact_fraction": 0.96625,
+        "contact_force_mean_N": 0.15150408189205042,
+        "contact_force_std_N": 0.044825526749483965,
+        "target_force_error_mean_N": 0.13171622665958602,
+        "stable": false
+      },
+      {
+        "run_id": 3,
+        "H_Nmm": 0.21590475037725826,
+        "contact_fraction": 0.953125,
+        "contact_force_mean_N": 0.1891428257662278,
+        "contact_force_std_N": 0.06451952035004747,
+        "target_force_error_mean_N": 0.16936103070782538,
+        "stable": false
+      },
+      {
+        "run_id": 4,
+        "H_Nmm": 0.17391507408185505,
+        "contact_fraction": 0.958125,
+        "contact_force_mean_N": 0.14069443092246778,
+        "contact_force_std_N": 0.0498617702632926,
+        "target_force_error_mean_N": 0.1210047945628789,
+        "stable": false
+      },
+      {
+        "run_id": 5,
+        "H_Nmm": 0.16491773614927815,
+        "contact_fraction": 0.96,
+        "contact_force_mean_N": 0.14435799124570323,
+        "contact_force_std_N": 0.05116883595290571,
+        "target_force_error_mean_N": 0.12464436989298727,
+        "stable": false
+      },
+      {
+        "run_id": 6,
+        "H_Nmm": 0.16979464434435496,
+        "contact_fraction": 0.9725,
+        "contact_force_mean_N": 0.19933363640070312,
+        "contact_force_std_N": 0.05918926476121066,
+        "target_force_error_mean_N": 0.17948159360455077,
+        "stable": false
+      },
+      {
+        "run_id": 7,
+        "H_Nmm": 0.166043602299784,
+        "contact_fraction": 0.97125,
+        "contact_force_mean_N": 0.1449133648764961,
+        "contact_force_std_N": 0.04307534578680554,
+        "target_force_error_mean_N": 0.12514158514787072,
+        "stable": false
+      },
+      {
+        "run_id": 8,
+        "H_Nmm": 0.1636790724232331,
+        "contact_fraction": 0.9725,
+        "contact_force_mean_N": 0.1949485919500207,
+        "contact_force_std_N": 0.058986070814054006,
+        "target_force_error_mean_N": 0.17510966367327732,
+        "stable": false
+      },
+      {
+        "run_id": 9,
+        "H_Nmm": 0.2122150906556759,
+        "contact_fraction": 0.9675,
+        "contact_force_mean_N": 0.20071425928304412,
+        "contact_force_std_N": 0.05782079847152185,
+        "target_force_error_mean_N": 0.18087023188432955,
+        "stable": false
+      },
+      {
+        "run_id": 10,
+        "H_Nmm": 0.15264481351890752,
+        "contact_fraction": 0.9625,
+        "contact_force_mean_N": 0.13258798381703274,
+        "contact_force_std_N": 0.04598251730505575,
+        "target_force_error_mean_N": 0.11288043912577155,
+        "stable": false
+      },
+      {
+        "run_id": 11,
+        "H_Nmm": 0.20815398011422484,
+        "contact_fraction": 0.965,
+        "contact_force_mean_N": 0.1898871455887987,
+        "contact_force_std_N": 0.056723756450111164,
+        "target_force_error_mean_N": 0.17005920717085726,
+        "stable": false
+      },
+      {
+        "run_id": 12,
+        "H_Nmm": 0.21347786989673745,
+        "contact_fraction": 0.963125,
+        "contact_force_mean_N": 0.14390909839821628,
+        "contact_force_std_N": 0.04211374536847127,
+        "target_force_error_mean_N": 0.12413300089983305,
+        "stable": false
+      },
+      {
+        "run_id": 13,
+        "H_Nmm": 0.17103674031801566,
+        "contact_fraction": 0.971875,
+        "contact_force_mean_N": 0.201657474937586,
+        "contact_force_std_N": 0.06060907558122452,
+        "target_force_error_mean_N": 0.18181486251155274,
+        "stable": false
+      },
+      {
+        "run_id": 14,
+        "H_Nmm": 0.19763128727743298,
+        "contact_fraction": 0.9675,
+        "contact_force_mean_N": 0.1538285318187399,
+        "contact_force_std_N": 0.04430665265547934,
+        "target_force_error_mean_N": 0.1340297729540613,
+        "stable": false
+      },
+      {
+        "run_id": 15,
+        "H_Nmm": 0.19892261383958776,
+        "contact_fraction": 0.968125,
+        "contact_force_mean_N": 0.19824137498796868,
+        "contact_force_std_N": 0.0579287242619192,
+        "target_force_error_mean_N": 0.17839458211147055,
+        "stable": false
+      },
+      {
+        "run_id": 16,
+        "H_Nmm": 0.20003818890282288,
+        "contact_fraction": 0.956875,
+        "contact_force_mean_N": 0.19140215346259967,
+        "contact_force_std_N": 0.06514362462616136,
+        "target_force_error_mean_N": 0.1716036443888935,
+        "stable": false
+      },
+      {
+        "run_id": 17,
+        "H_Nmm": 0.19347654740742373,
+        "contact_fraction": 0.96875,
+        "contact_force_mean_N": 0.1871264533180039,
+        "contact_force_std_N": 0.05534555732980498,
+        "target_force_error_mean_N": 0.16729080579197722,
+        "stable": false
+      },
+      {
+        "run_id": 18,
+        "H_Nmm": 0.17545490823997617,
+        "contact_fraction": 0.961875,
+        "contact_force_mean_N": 0.1732717495689233,
+        "contact_force_std_N": 0.059902445442604,
+        "target_force_error_mean_N": 0.1534984783440284,
+        "stable": false
+      },
+      {
+        "run_id": 19,
+        "H_Nmm": 0.1694019549940106,
+        "contact_fraction": 0.961875,
+        "contact_force_mean_N": 0.18207071500629343,
+        "contact_force_std_N": 0.06353844815855585,
+        "target_force_error_mean_N": 0.1622816077742529,
+        "stable": false
+      }
+    ],
+    "summary": {
+      "mean_Nmm": 0.1853231579408991,
+      "std_Nmm": 0.019273771574330453,
+      "worst_Nmm": 0.21590475037725826,
+      "robustness_index": 1.1415169862087176
+    },
+    "tornado": [
+      {
+        "parameter": "c_spring",
+        "standardized_coefficient": 0.9563824498745531
+      },
+      {
+        "parameter": "Fh_spring",
+        "standardized_coefficient": 0.31106744090434474
+      },
+      {
+        "parameter": "Fh_mat",
+        "standardized_coefficient": 0.2780129347805374
+      },
+      {
+        "parameter": "E_load",
+        "standardized_coefficient": -0.08020011651796298
+      },
+      {
+        "parameter": "k_high",
+        "standardized_coefficient": 0.06178219280509754
+      },
+      {
+        "parameter": "yt_offset",
+        "standardized_coefficient": 0.033485694743655446
+      },
+      {
+        "parameter": "k_low",
+        "standardized_coefficient": -0.005553765313712514
+      },
+      {
+        "parameter": "E_unload",
+        "standardized_coefficient": -0.004239460672872759
+      },
+      {
+        "parameter": "k_spring",
+        "standardized_coefficient": 0.00022628993151518656
+      }
+    ]
+  }
+}
