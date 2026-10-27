@@ -60,7 +60,7 @@ NOMINAL_PARAMS = {
     "dt": 0.01,                 # Passo di integrazione temporale [s]
     "live_plot": True,          # Grafici in tempo reale (processo matplotlib separato)
     "plot_every": 5,            # Invia un punto ai grafici ogni N passi
-    "print_every": 25,          # In modo autonomo stampa lo stato ogni N passi
+    "print_every": 50,          # In modo autonomo stampa lo stato ogni N passi
 }
 
 # Range di perturbazione Monte Carlo (Progetto 5): modulo uniforme tra 10% e 20% con segno casuale
