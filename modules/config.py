@@ -81,7 +81,7 @@ NOMINAL_PARAMS = {
     "force_scale": 1.0,         # Fattore di calibrazione lambda -> N (da verificare)
     "contact_stability_tolerance": 0.005,  # Tolleranza assoluta sul target forza [N]
     "random_seed": 2026,        # Seed per riproducibilita' delle realizzazioni
-    "mc_output": "mc_results.json",
+    "mc_workers": 6,            # Processi paralleli del Monte Carlo (12 thread, 15 GB RAM)
 
     # Masse da densita' (unita' mm-N-s: massa in tonnellate, densita' in t/mm^3)
     "rho_tube": 6.45e-9,        # Nitinol 6450 kg/m^3
@@ -104,14 +104,15 @@ NOMINAL_PARAMS = {
 MC_UNCERTAINTY_RANGE = (0.10, 0.20)
 MC_NUM_REALIZATIONS = 20
 
-UNCERTAIN_PARAMS = (
-    "E_load",
-    "E_unload",
-    "Fh_mat",
-    "Fh_spring",
-    "c_spring",
-    "k_spring",
-    "k_low",
-    "k_high",
-    "yt_offset",
-)
+# Parametri incerti della tabella del Progetto 5, raggruppati: ogni gruppo riceve UNA
+# perturbazione (modulo uniforme 10-20%, segno casuale) applicata a tutte le sue chiavi.
+#   E : E_load ed E_unload con lo stesso fattore (rapporto carico/scarico invariato)
+#   k : k fissa e i due livelli 0.6 / 4.8 con lo stesso fattore ("k" e' un solo parametro)
+UNCERTAIN_GROUPS = {
+    "E": ("E_load", "E_unload"),
+    "Fh_mat": ("Fh_mat",),
+    "Fh_spring": ("Fh_spring",),
+    "c": ("c_spring",),
+    "k": ("k_spring", "k_low", "k_high"),
+    "yt": ("yt_offset",),
+}

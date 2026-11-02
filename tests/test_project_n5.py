@@ -1,100 +1,75 @@
-import io
-import json
 import tempfile
 import unittest
-from contextlib import redirect_stderr
 from pathlib import Path
 
 import numpy as np
 
-from modules.config import NOMINAL_PARAMS, UNCERTAIN_PARAMS
+from modules.config import NOMINAL_PARAMS, UNCERTAIN_GROUPS
 from modules.contact_force import read_contact_force
 from modules.geometry_gen import check_tet_mesh, create_hollow_tube_meshes
-from modules.monte_carlo import (
-    contact_metrics,
-    hysteresis_area_Nmm,
-    run_monte_carlo,
-    sample_realizations,
-    summarize_hysteresis,
-    tornado_coefficients,
-)
+from modules.monte_carlo import analyze, build_tasks, regression_tornado, sample_realizations
 
 
 class MonteCarloTests(unittest.TestCase):
-    def test_sampled_perturbations_are_reproducible_and_bounded(self):
+    def test_grouped_perturbations_reproducible_and_bounded(self):
         first = sample_realizations(seed=17, count=20)
-        second = sample_realizations(seed=17, count=20)
-        self.assertEqual(first, second)
+        self.assertEqual(first, sample_realizations(seed=17, count=20))
         self.assertEqual(len(first), 20)
+        for r in first:
+            self.assertEqual(set(r["deltas"]), set(UNCERTAIN_GROUPS))
+            for group, keys in UNCERTAIN_GROUPS.items():
+                d = r["deltas"][group]
+                self.assertGreaterEqual(abs(d), 0.10)
+                self.assertLessEqual(abs(d), 0.20)
+                for key in keys:  # stesso fattore per tutte le chiavi del gruppo
+                    self.assertAlmostEqual(r["overrides"][key], NOMINAL_PARAMS[key] * (1 + d))
+            ratio = r["overrides"]["E_load"] / r["overrides"]["E_unload"]
+            self.assertAlmostEqual(ratio, NOMINAL_PARAMS["E_load"] / NOMINAL_PARAMS["E_unload"])
 
-        for realization in first:
-            self.assertGreater(
-                realization["params"]["E_load"],
-                realization["params"]["E_unload"],
-            )
-            for key in UNCERTAIN_PARAMS:
-                delta = realization["relative_perturbations"][key]
-                self.assertGreaterEqual(abs(delta), 0.10)
-                self.assertLessEqual(abs(delta), 0.20)
-                self.assertAlmostEqual(
-                    realization["params"][key],
-                    NOMINAL_PARAMS[key] * (1.0 + delta),
-                )
+    def test_task_list(self):
+        tasks = build_tasks(sample_realizations(count=20), "/tmp/series")
+        self.assertEqual(len(tasks), 21 * 2 * 3 + 1)
+        self.assertEqual(len({t["case_id"] for t in tasks}), len(tasks))
+        self.assertEqual(tasks[0]["test"], "soft")  # i casi piu' lunghi per primi
 
-    def test_metric_helpers(self):
-        self.assertAlmostEqual(
-            hysteresis_area_Nmm([0.0, 1.0, 0.0], [1.0, 1.0, 0.0]),
-            0.5,
-        )
-        contact = contact_metrics([0.0, 0.020, 0.021], 0.005, 0.020, 0.005)
-        self.assertAlmostEqual(contact["contact_fraction"], 2.0 / 3.0)
-        self.assertTrue(contact["stable"])
-        summary = summarize_hysteresis([1.0, 2.0], 0.5)
-        self.assertEqual(summary["worst_Nmm"], 2.0)
-        self.assertEqual(summary["robustness_index"], 4.0)
+    def test_tornado_recovers_linear_model(self):
+        reals = sample_realizations(seed=3, count=20)
+        D = [r["deltas"] for r in reals]
+        H = [15 + 4 * d["yt"] / 0.2 - 2 * d["E"] / 0.2 + 0.5 * d["k"] / 0.2 for d in D]
+        t = regression_tornado(D, H)
+        coef = {c["parameter"]: c["coef_pct_per_20pct"] for c in t["coefficients"]}
+        self.assertAlmostEqual(coef["yt"], 4.0, places=6)
+        self.assertAlmostEqual(coef["E"], -2.0, places=6)
+        self.assertEqual([c["parameter"] for c in t["coefficients"][:2]], ["yt", "E"])
+        self.assertAlmostEqual(t["r2"], 1.0, places=9)
 
-        perturbations = [
-            {"p": -0.1, "q": 0.1},
-            {"p": 0.1, "q": -0.1},
-            {"p": -0.2, "q": -0.2},
-            {"p": 0.2, "q": 0.2},
-        ]
-        tornado = tornado_coefficients(perturbations, [0.8, 1.2, 0.6, 1.4])
-        self.assertEqual({row["parameter"] for row in tornado}, {"p", "q"})
-
-    def test_monte_carlo_runs_all_contact_and_spring_scenarios(self):
-        def simulate(params, steps):
-            phase = np.linspace(0.0, 2.0 * np.pi, 101)
-            gain = (
-                params["E_load"] / NOMINAL_PARAMS["E_load"]
-                + params["k_spring"] / NOMINAL_PARAMS["k_spring"]
-            )
-            return {
-                "tip_displacement_mm": np.sin(phase),
-                "tendon_force_N": 2.0 + gain * np.cos(phase),
-                "contact_force_N": np.full(
-                    steps, params["contact_target_force"]
-                ),
-            }
-
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "results.json"
-            progress = io.StringIO()
-            with redirect_stderr(progress):
-                results = run_monte_carlo(
-                    simulate,
-                    seed=17,
-                    count=20,
-                    output_path=output,
-                )
-            self.assertEqual(len(results), 4)
-            self.assertTrue(all(
-                len(result["realizations"]) == 20
-                for result in results.values()
-            ))
-            self.assertEqual(set(json.loads(output.read_text(encoding="utf-8"))), set(results))
-            self.assertIn("0/84", progress.getvalue())
-            self.assertIn("84/84", progress.getvalue())
+    def test_analyze_statistics_and_target(self):
+        reals = sample_realizations(seed=5, count=20)
+        results = [{"case_id": "x", "realization": "nominal", "config": "direct",
+                    "test": "free", "metrics": {"H_pct": 30.0}}]
+        for cfg, base in (("fixed", 14.0), ("switched", 16.0)):
+            results.append({"case_id": "x", "realization": "nominal", "config": cfg,
+                            "test": "free", "metrics": {"H_pct": base}})
+            for r in reals:
+                H = base * (1 + 0.5 * r["deltas"]["yt"])
+                results.append({"case_id": "x", "realization": r["realization"], "config": cfg,
+                                "test": "free", "metrics": {"H_pct": H}})
+                for obj in ("rigid", "soft"):
+                    stable = not (cfg == "switched" and obj == "rigid" and r["realization"] == "r03")
+                    results.append({"case_id": "x", "realization": r["realization"],
+                                    "config": cfg, "test": obj,
+                                    "metrics": {"stable": stable, "in_range_10_50mN": True}})
+        s = analyze(results, reals)
+        f, w = s["configs"]["fixed"], s["configs"]["switched"]
+        self.assertEqual(f["n_realizations"], 20)
+        self.assertAlmostEqual(f["robustness_index"], f["H_worst_pct"] / 14.0)
+        self.assertLessEqual(f["robustness_index"], 1.3)
+        self.assertTrue(f["meets_target"])
+        self.assertEqual(w["unstable_total"], 1)
+        self.assertFalse(w["meets_target"])
+        self.assertEqual(s["most_robust_config"], "fixed")
+        self.assertEqual(f["dominant_parameters"][0], "yt")
+        self.assertAlmostEqual(f["H_nominal_over_direct"], 14.0 / 30.0)
 
 
 class MeshTests(unittest.TestCase):

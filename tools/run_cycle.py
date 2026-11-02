@@ -23,51 +23,13 @@ Esecuzione (cartella SOFA_Project, source env.sh):
 import argparse
 import os
 import sys
-import time
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_DIR)
 
-import Sofa.Core  # noqa: E402
-import Sofa.Simulation  # noqa: E402
-
-from main_scene import createScene  # noqa: E402
 from modules.config import NOMINAL_PARAMS  # noqa: E402
+from modules.protocols import CONFIGS, simulate  # noqa: E402
 from modules.metrics import contact_stability, hysteresis_H  # noqa: E402
-
-CONFIGS = {
-    "fixed": {"switched_mode": False},
-    "switched": {"switched_mode": True},
-    "direct": {"switched_mode": False, "k_spring": 50.0},
-}
-
-
-def simulate(overrides, hold_s, stop_after_hold, max_time=120.0):
-    p = NOMINAL_PARAMS.copy()
-    p.update(live_plot=False)
-    p.update(overrides)
-    root = Sofa.Core.Node("root")
-    createScene(root, p)
-    Sofa.Simulation.init(root)
-    ctrl = root.getObject("ActuationController")
-    dt = float(root.dt.value)
-    ctrl.start_autonomous_cycle(hold_s=hold_s, repeat=False)
-    seen_hold = False
-    n = 0
-    t0 = time.perf_counter()
-    while ctrl.phase != "done" and n * dt < max_time:
-        Sofa.Simulation.animate(root, dt)
-        n += 1
-        seen_hold |= ctrl.phase == "hold"
-        if stop_after_hold and seen_hold and ctrl.phase == "unload":
-            break
-    elapsed = time.perf_counter() - t0
-    if n * dt >= max_time:
-        print(f"    ATTENZIONE: raggiunto max_time = {max_time} s (fase {ctrl.phase})")
-    if ctrl.contact_read_errors:
-        print(f"    ATTENZIONE: {ctrl.contact_read_errors} errori di lettura della forza")
-    return root, ctrl, n, elapsed
-
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
@@ -86,8 +48,8 @@ def main():
     if a.free:
         print("\n=== Cicli liberi (H) ===")
         for name in a.configs:
-            root, ctrl, n, el = simulate({"contact_object": "none", **CONFIGS[name]},
-                                         hold_s=0.0, stop_after_hold=False)
+            root, ctrl, n, el, _ = simulate({"contact_object": "none", **CONFIGS[name]},
+                                            hold_s=0.0, stop_after_hold=False)
             path = ctrl.export_csv(os.path.join(a.outdir, f"free_{name}.csv"))
             h = ctrl.history
             r = hysteresis_H(h["u"], h["dY"], h["phase"])
@@ -109,7 +71,7 @@ def main():
             for name in [c for c in a.configs if c != "direct"]:
                 overrides = {"contact_object": obj, "auto_stop_force": P["contact_stop_force"],
                              "auto_rate": P["contact_rate"], **CONFIGS[name]}
-                root, ctrl, n, el = simulate(overrides,
+                root, ctrl, n, el, _ = simulate(overrides,
                                              hold_s=P["contact_settle_s"] + P["hold_duration"],
                                              stop_after_hold=True)
                 path = ctrl.export_csv(os.path.join(a.outdir, f"contact_{obj}_{name}.csv"))
