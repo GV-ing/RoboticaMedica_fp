@@ -8,7 +8,8 @@ Monte Carlo.
 Casi:
   free     ciclo libero 0 -> T_max -> 0 senza oggetto        -> H [%]
            configurazioni: fixed (k = 1.2), switched (0.6/4.8), direct (k = 50)
-  contact  carico fino a fine corsa (T_max) + u fermo per hold_duration s
+  contact  carico (contact_rate) fino a contact_stop_force o a fine corsa (T_max), poi u fermo:
+           contact_settle_s di assestamento + hold_duration s di valutazione
            su oggetto rigido e soffice                         -> stabilita' del contatto
 
 Ogni caso salva la cronologia in results/<caso>.csv.
@@ -102,18 +103,28 @@ def main():
                     print(f"  H_{name} / H_direct = {H[name] / H['direct']:.3f}")
 
     if a.contact:
-        print(f"\n=== Prove di contatto (carico a fine corsa + {P['hold_duration']:g} s fermo) ===")
+        print(f"\n=== Prove di contatto (arresto a {P['contact_stop_force'] * 1e3:g} mN o a fine corsa,"
+              f" {P['contact_settle_s']:g} s + {P['hold_duration']:g} s fermo) ===")
         for obj in a.objects:
             for name in [c for c in a.configs if c != "direct"]:
-                root, ctrl, n, el = simulate({"contact_object": obj, **CONFIGS[name]},
-                                             hold_s=P["hold_duration"], stop_after_hold=True)
+                overrides = {"contact_object": obj, "auto_stop_force": P["contact_stop_force"],
+                             "auto_rate": P["contact_rate"], **CONFIGS[name]}
+                root, ctrl, n, el = simulate(overrides,
+                                             hold_s=P["contact_settle_s"] + P["hold_duration"],
+                                             stop_after_hold=True)
                 path = ctrl.export_csv(os.path.join(a.outdir, f"contact_{obj}_{name}.csv"))
                 h = ctrl.history
                 s = contact_stability(h["t"], h["F_contact"], h["phase"],
                                       duration=P["hold_duration"],
                                       ptp_max=P["stability_ptp_max"],
                                       loss_force=P["contact_loss_force"])
-                print(f"  {obj:5s} {name:8s}: F media = {s['F_mean_N'] * 1e3:7.2f} mN  "
+                hold = [i for i, ph in enumerate(h["phase"]) if ph == "hold"]
+                F_stop = h["F_contact"][hold[0]] if hold else float("nan")
+                F_hold_max = max(h["F_contact"][i] for i in hold) if hold else float("nan")
+                print(f"  {obj:5s} {name:8s}: arresto a F = {F_stop * 1e3:.2f} mN, T = "
+                      f"{h['T'][hold[0]] if hold else float('nan'):.2f} N; max nel mantenimento "
+                      f"{F_hold_max * 1e3:.2f} mN")
+                print(f"  {'':5s} {'':8s}  F media = {s['F_mean_N'] * 1e3:7.2f} mN  "
                       f"p-p/media = {s['ptp_over_mean']:.3f}  perso = {s['contact_lost']}  "
                       f"durata = {s['hold_duration_s']:.2f} s  -> stabile = {s['stable']}  "
                       f"(range 10-50 mN: {s['in_range_10_50mN']}, k finale {h['k'][-1]:.2f})")

@@ -5,8 +5,9 @@ Comandi (traccia: carico/scarico, reset, manuale/autonomo; a ogni comando stampa
     Freccia SU / U / +   carico   (+u_step)          Freccia GIU' / D / -   scarico (-u_step)
     R                    reset                        M / A                  manuale <-> autonomo
 
-Ciclo autonomo (macchina a stati): 'load' a velocita' costante finche' T raggiunge T_max
-(o u = u_max) -> 'hold' per auto_hold_s secondi -> 'unload' fino a u = 0 -> 'done'
+Ciclo autonomo (macchina a stati): 'load' a velocita' costante finche' T raggiunge T_max,
+u = u_max o (se impostata) la forza di contatto raggiunge auto_stop_force -> 'hold' per
+auto_hold_s secondi -> 'unload' fino a u = 0 -> 'done'
 (oppure di nuovo 'load' se auto_repeat). La fase e' registrata per separare carico e scarico.
 
 Convenzioni SOFA 26.06 verificate (tools/): al CableConstraint si impone l'impulso T*dt;
@@ -130,7 +131,10 @@ class TendonSpringController(Sofa.Core.Controller):
     rate = self.params["auto_rate"]
     if self.phase == "load":
       self.u_target = min(self.params["u_max"], self.u_target + rate * dt)
-      if self.T >= self.spring.T_max * (1.0 - 1e-6) or self.u >= self.params["u_max"] - 1e-9:
+      stop_force = self.params.get("auto_stop_force")
+      force_reached = stop_force is not None and self.contact_force_N >= stop_force
+      if (force_reached or self.T >= self.spring.T_max * (1.0 - 1e-6)
+          or self.u >= self.params["u_max"] - 1e-9):
         self.u_target = self.u
         self.phase = "hold" if self.params["auto_hold_s"] > 0 else "unload"
         self.hold_timer = 0.0

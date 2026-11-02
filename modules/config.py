@@ -51,7 +51,11 @@ NOMINAL_PARAMS = {
     "max_force_rate": 5.0,      # |dT/dt| massimo [N/s] (glossario, rate-limiter di sicurezza)
     "dk_dt_max": 2.0,           # |dk/dt| massimo della molla a due livelli [N/mm/s] (glossario)
     "dahl_sigma0": 10.0,        # Rigidezza di Dahl dell'isteresi [1/mm] (glossario: 5-20)
-    "hold_duration": 5.0,       # Durata della prova di stabilita' del contatto [s] (traccia)
+    "hold_duration": 5.0,       # Finestra di valutazione della stabilita' [s] (traccia)
+    "auto_stop_force": None,    # Se impostata [N], il carico autonomo si ferma a questa forza
+    "contact_stop_force": 0.030,  # Prova di contatto: arresto a 30 mN (centro del range) o a fine corsa
+    "contact_settle_s": 2.5,    # Assestamento prima della finestra (k sale 0.6->4.8 in ~2.1 s)
+    "contact_rate": 2.0,        # Velocita' di carico nella prova di contatto [mm/s] (glossario: max 2)
     "stability_ptp_max": 0.30,  # Oscillazione picco-picco massima / media (traccia: 30%)
     "contact_loss_force": 1e-4, # Sotto questa forza [N] il contatto si considera perso
     "F_contact_th": 0.005,      # Soglia rilevamento contatto: 5 mN = 0.005 N
@@ -65,7 +69,7 @@ NOMINAL_PARAMS = {
     "obj_overlap_x": 5.0,       # Quanto l'oggetto supera la punta lungo X [mm]
     "obj_grid_n": 5,            # Nodi per lato della griglia FEM dell'oggetto soffice
     "soft_mesh": "graded",      # "graded" (fine al contatto) | "uniform" (obj_grid_n per lato)
-    "soft_h_min": 1.6,          # Passo minimo vicino al contatto [mm] (da studio di convergenza)
+    "soft_h_min": 1.6,          # Passo minimo al contatto [mm]: compromesso costo/accuratezza (soft_mesh_convergence)
     "soft_h_max": 5.0,          # Passo massimo lontano dal contatto [mm]
     "soft_growth": 1.4,         # Fattore di crescita geometrica del passo
     "E_soft": 0.005,            # Oggetto soffice: 5 kPa = 0.005 MPa
