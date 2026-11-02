@@ -9,8 +9,9 @@ def create_hollow_tube_meshes(
     od=1.93,          # Diametro esterno [mm]
     thickness=0.22,   # Spessore parete [mm] -> ID = 1.49 mm
     length=100.0,     # Lunghezza totale [mm] (40 mm albero + 60 mm flessibile)
-    n_x=30,           # Suddivisioni longitudinali
-    n_theta=12        # Suddivisioni circonferenziali
+    n_x=30,           # Suddivisioni longitudinali (se x_vals non e' dato)
+    n_theta=12,       # Suddivisioni circonferenziali
+    x_vals=None,      # Coordinate assiali degli anelli [mm] (mesh graduata); prevale su n_x/length
 ):
     """
     Genera la mesh volumetrica tetraedrica (nodi + tetraedri) per TetrahedronFEMForceField
@@ -24,13 +25,21 @@ def create_hollow_tube_meshes(
     """
     if od <= 0 or thickness <= 0 or thickness >= od / 2:
         raise ValueError("Richiesti od > 0 e 0 < thickness < od/2")
-    if length <= 0 or n_x < 1 or n_theta < 3:
-        raise ValueError("Richiesti length > 0, n_x >= 1 e n_theta >= 3")
+    if x_vals is None:
+        if length <= 0 or n_x < 1:
+            raise ValueError("Richiesti length > 0 e n_x >= 1")
+        x_vals = np.linspace(0.0, length, n_x + 1)
+    else:
+        x_vals = np.asarray(x_vals, dtype=float)
+        if x_vals.ndim != 1 or x_vals.size < 2 or np.any(np.diff(x_vals) <= 0):
+            raise ValueError("x_vals deve essere un vettore strettamente crescente (>= 2 valori)")
+        n_x = x_vals.size - 1
+        length = float(x_vals[-1] - x_vals[0])
+    if n_theta < 3:
+        raise ValueError("Richiesto n_theta >= 3")
 
     r_out = od / 2.0
     r_in = r_out - thickness
-
-    x_vals = np.linspace(0.0, length, n_x + 1)
     theta_vals = np.linspace(0.0, 2.0 * np.pi, n_theta, endpoint=False)
 
     fem_nodes = []
@@ -117,6 +126,31 @@ def create_hollow_tube_meshes(
             f.write(f"f {fc[0]} {fc[1]} {fc[2]}\n")
 
     return fem_nodes, tetrahedra
+
+
+def graded_x_vals(length_total, length_shaft, h_flex, n_shaft=4):
+    """Anelli assiali: n_shaft elementi sull'albero (vincolato) e passo ~h_flex sulla parte flessibile."""
+    if not 0 < length_shaft < length_total:
+        raise ValueError("Richiesto 0 < length_shaft < length_total")
+    if h_flex <= 0 or n_shaft < 1:
+        raise ValueError("Richiesti h_flex > 0 e n_shaft >= 1")
+    n_flex = max(1, int(round((length_total - length_shaft) / h_flex)))
+    shaft = np.linspace(0.0, length_shaft, n_shaft + 1)
+    flex = np.linspace(length_shaft, length_total, n_flex + 1)[1:]
+    return np.concatenate((shaft, flex))
+
+
+def write_surface_obj(obj_filepath, od, thickness, x_start, x_end, h, n_theta=12):
+    """Superficie chiusa del tubo tra x_start e x_end (passo ~h) per modelli visivo/collisione.
+
+    I vertici giacciono sulla superficie della mesh FEM (stessi angoli theta), quindi la
+    BarycentricMapping verso la mesh fine e' esatta. Restituisce il numero di vertici.
+    """
+    n = max(1, int(round((x_end - x_start) / h)))
+    nodes, _ = create_hollow_tube_meshes(
+        obj_filepath, od=od, thickness=thickness, n_theta=n_theta,
+        x_vals=np.linspace(x_start, x_end, n + 1))
+    return len(nodes)
 
 
 def check_tet_mesh(nodes, tetrahedra):

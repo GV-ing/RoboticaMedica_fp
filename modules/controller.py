@@ -139,8 +139,11 @@ class TendonSpringController(Sofa.Core.Controller):
       # Saturazione a T_max = 10.0 N come prescritto dalle specifiche generali
       self.T = float(np.clip(raw_T, 0.0, self.params.get("T_max", 10.0)))
 
-    # Assegnazione del carico al vincolo di fune
-    self.cable.value.value = [self.T]
+    # Assegnazione del carico al vincolo di fune.
+    # Con FreeMotionAnimationLoop il solver dei vincoli lavora in IMPULSI
+    # (forza * dt): per applicare davvero la forza T [N] si impone T * dt.
+    # Verificato con tools/check_cable.py (cavo = value/dt, dipendenza lineare da 1/dt).
+    self.cable.value.value = [self.T * dt]
 
     # Tracciamento telemetria
     tip = self.get_tip_position()

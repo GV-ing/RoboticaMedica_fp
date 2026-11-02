@@ -4,7 +4,7 @@ import numpy as np
 
 
 def read_contact_force(root):
-    """Return the contact's normal reaction in solver force units.
+    """Return the contact's normal reaction force in newtons (lambda / dt).
 
     The project places the contact object on the tube's +Y side, so the
     contact normal is parallel to Y. Read the mapped collision MechanicalObject
@@ -37,4 +37,8 @@ def read_contact_force(root):
     if not np.all(np.isfinite(reaction_vectors)):
         raise ValueError("lambda del contatto contiene valori non finiti")
 
-    return float(abs(np.sum(reaction_vectors[:, 1])))
+    # lambda e' un IMPULSO [N*s] (FreeMotionAnimationLoop): forza = lambda / dt.
+    dt = float(root.dt.value)
+    if not np.isfinite(dt) or dt <= 0.0:
+        raise ValueError(f"dt non valido: {dt}")
+    return float(abs(np.sum(reaction_vectors[:, 1])) / dt)

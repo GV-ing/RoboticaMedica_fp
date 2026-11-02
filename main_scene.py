@@ -9,7 +9,12 @@ import Sofa.Core
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from modules.config import NOMINAL_PARAMS
-from modules.geometry_gen import create_hollow_tube_meshes, check_tet_mesh
+from modules.geometry_gen import (
+    create_hollow_tube_meshes,
+    check_tet_mesh,
+    graded_x_vals,
+    write_surface_obj,
+)
 from modules.controller import TendonSpringController
 from modules.contact_force import read_contact_force
 
@@ -81,14 +86,29 @@ def createScene(rootNode, custom_params=None):
                        response="FrictionContactConstraint",
                        responseParams="mu=" + str(params["mu_friction"]))
 
-    # 3. Mesh tetraedrica del tubo
-    obj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meshes", "tube_surface.obj")
+    # 3. Mesh del tubo: FEM graduata (fine sulla parte flessibile) e superfici separate,
+    #    piu' grossolane, per i modelli visivo e di collisione (BarycentricMapping).
+    mesh_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meshes")
+    fem_obj_path = os.path.join(mesh_dir, "tube_fem_surface.obj")
+    obj_path = os.path.join(mesh_dir, "tube_surface.obj")            # modello visivo
+    collision_obj_path = os.path.join(mesh_dir, "tube_collision.obj")  # modello di collisione
+    n_theta = int(params["mesh_n_theta"])
     fem_nodes, tetrahedra = create_hollow_tube_meshes(
-        obj_filepath=obj_path,
+        obj_filepath=fem_obj_path,
         od=params["od"],
         thickness=params["thickness"],
-        length=params["length_total"],
+        n_theta=n_theta,
+        x_vals=graded_x_vals(params["length_total"], params["length_shaft"],
+                             params["mesh_h_flex"], int(params["mesh_n_shaft"])),
     )
+    write_surface_obj(obj_path, params["od"], params["thickness"],
+                      0.0, params["length_total"], params["visual_h"], n_theta)
+    collision_x_start = max(
+        params["length_shaft"],
+        params["length_total"] - params["obj_size"] - params["collision_margin"],
+    )
+    write_surface_obj(collision_obj_path, params["od"], params["thickness"],
+                      collision_x_start, params["length_total"], params["collision_h"], n_theta)
     bad, vmin, _ = check_tet_mesh(fem_nodes, tetrahedra)
     if bad > 0:
         raise RuntimeError(f"Mesh tubo non valida: {bad} tetraedri invertiti/degeneri (vol min {vmin:.4g})")
@@ -145,7 +165,7 @@ def createScene(rootNode, custom_params=None):
     visualNode.addObject("BarycentricMapping", name="visualMapping")
 
     tubeCollisionNode = tubeNode.addChild("CollisionModel")
-    tubeCollisionNode.addObject("MeshOBJLoader", name="collisionLoader", filename=obj_path)
+    tubeCollisionNode.addObject("MeshOBJLoader", name="collisionLoader", filename=collision_obj_path)
     tubeCollisionNode.addObject("MeshTopology", src="@collisionLoader")
     tubeCollisionNode.addObject("MechanicalObject", name="dofs", src="@collisionLoader", template="Vec3d")
     tubeCollisionNode.addObject("TriangleCollisionModel", group=0, simulated=True, moving=True)

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.csv
+meshes/tube_fem_surface.obj
+meshes/tube_collision.obj

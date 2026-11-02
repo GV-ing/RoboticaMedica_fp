@@ -13,6 +13,14 @@ NOMINAL_PARAMS = {
     "length_shaft": 40.0,       # Albero prossimale vincolato [mm]
     "length_flex": 60.0,        # Parte flessibile distale [mm]
 
+    # Discretizzazione (studio di convergenza: tools/mesh_convergence.py)
+    "mesh_h_flex": 0.40,        # Passo assiale FEM sulla parte flessibile [mm]
+    "mesh_n_shaft": 4,          # Elementi sull'albero vincolato (non deformabile)
+    "mesh_n_theta": 12,         # Suddivisioni circonferenziali (ininfluenti sulla flessione)
+    "visual_h": 2.0,            # Passo assiale della superficie visiva [mm]
+    "collision_h": 1.0,         # Passo assiale della superficie di collisione [mm]
+    "collision_margin": 5.0,    # La collisione parte da (L - obj_size - margin) [mm]
+
     # Materiale Nitinol
     "E_load": 77000.0,          # Modulo di Young in carico [MPa] (77 GPa)
     "E_unload": 65000.0,        # Modulo di Young in scarico [MPa] (65 GPa)

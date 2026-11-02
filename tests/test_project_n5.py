@@ -120,6 +120,36 @@ class MeshTests(unittest.TestCase):
             self.assertEqual(set(edge_counts.values()), {2})
 
 
+class GradedMeshTests(unittest.TestCase):
+    def test_graded_mesh_is_valid_and_surfaces_lie_on_tube(self):
+        from modules.geometry_gen import graded_x_vals, write_surface_obj
+
+        x_vals = graded_x_vals(100.0, 40.0, h_flex=0.5, n_shaft=4)
+        self.assertAlmostEqual(x_vals[0], 0.0)
+        self.assertAlmostEqual(x_vals[-1], 100.0)
+        self.assertIn(40.0, np.round(x_vals, 9))
+        self.assertTrue(np.all(np.diff(x_vals[5:]) <= 0.5 + 1e-9))
+
+        with tempfile.TemporaryDirectory() as directory:
+            nodes, tetrahedra = create_hollow_tube_meshes(
+                str(Path(directory) / "fem.obj"), x_vals=x_vals)
+            bad, _, volume = check_tet_mesh(nodes, tetrahedra)
+            self.assertEqual(bad, 0)
+            r_o, r_i = 1.93 / 2, 1.93 / 2 - 0.22
+            # volume del prisma poligonale a 12 lati ~ volume del tubo (entro 5%)
+            self.assertAlmostEqual(volume / (np.pi * (r_o**2 - r_i**2) * 100.0), 1.0, delta=0.05)
+
+            obj = Path(directory) / "coll.obj"
+            n_vertices = write_surface_obj(str(obj), 1.93, 0.22, 75.0, 100.0, 1.0)
+            verts = np.array([[float(v) for v in line.split()[1:]]
+                              for line in obj.read_text().splitlines()
+                              if line.startswith("v ")])
+            self.assertEqual(len(verts), n_vertices)
+            self.assertGreaterEqual(verts[:, 0].min(), 75.0 - 1e-9)
+            radii = np.hypot(verts[:, 1], verts[:, 2])
+            self.assertTrue(np.all(np.isclose(radii, r_o) | np.isclose(radii, r_i)))
+
+
 class ContactForceProviderTests(unittest.TestCase):
     def test_reads_resultant_normal_reaction_from_contact_surface(self):
         class Data:
@@ -147,7 +177,9 @@ class ContactForceProviderTests(unittest.TestCase):
             "CollisionModel": Node(objects={"dofs": dofs}),
         })
         root = Node(children={"SoftContactObject": contact})
-        self.assertAlmostEqual(read_contact_force(root), 0.002)
+        root.dt = Data(0.01)
+        # impulso 0.002 N*s su dt = 0.01 s -> forza 0.2 N
+        self.assertAlmostEqual(read_contact_force(root), 0.2)
         self.assertEqual(dofs.asserted_name, "lambda")
 
 
