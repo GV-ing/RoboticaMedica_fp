@@ -153,6 +153,91 @@ def write_surface_obj(obj_filepath, od, thickness, x_start, x_end, h, n_theta=12
     return len(nodes)
 
 
+def graded_axis(lo, hi, focus, h_min, h_max, growth=1.4):
+    """Coordinate in [lo, hi] con passo h_min attorno a `focus`, crescente in progressione
+    geometrica (fattore `growth`) fino a h_max. Contiene lo, hi e focus (se interno)."""
+    if not lo < hi or not 0 < h_min <= h_max or growth < 1.0:
+        raise ValueError("Richiesti lo < hi, 0 < h_min <= h_max, growth >= 1")
+    focus = min(max(focus, lo), hi)
+
+    def side(length):
+        pts, x, h = [], 0.0, h_min
+        while length - x > 1e-12:
+            step = min(h, h_max)
+            if length - x - step < 0.5 * step:   # ultimo intervallo assorbe il residuo
+                step = length - x
+            x += step
+            pts.append(x)
+            h *= growth
+        return pts
+
+    right = [focus + d for d in side(hi - focus)]
+    left = [focus - d for d in side(focus - lo)]
+    xs = sorted(set([lo, hi, focus] + right + left))
+    out = [xs[0]]
+    for a, b in zip(xs[:-1], xs[1:]):          # nessun intervallo oltre h_max
+        n = int(np.ceil((b - a) / h_max - 1e-9))
+        out.extend(np.linspace(a, b, n + 1)[1:].tolist())
+    return np.clip(np.array(out, dtype=float), lo, hi)
+
+
+def box_hexa_mesh(xs, ys, zs):
+    """Griglia strutturata di esaedri su coordinate (anche non uniformi).
+
+    Ordine dei nodi: indice = i + nx*(j + ny*k); ordine dei vertici dell'esaedro come in
+    RegularGridTopology di SOFA: (i,j,k) (i+1,j,k) (i+1,j+1,k) (i,j+1,k) e poi a k+1.
+    """
+    nx, ny, nz = len(xs), len(ys), len(zs)
+    X, Y, Z = np.meshgrid(xs, ys, zs, indexing="ij")
+    pos = np.stack([X.ravel(order="F"), Y.ravel(order="F"), Z.ravel(order="F")], axis=1)
+
+    def idx(i, j, k):
+        return i + nx * (j + ny * k)
+
+    hexa = []
+    for k in range(nz - 1):
+        for j in range(ny - 1):
+            for i in range(nx - 1):
+                hexa.append([idx(i, j, k), idx(i + 1, j, k), idx(i + 1, j + 1, k), idx(i, j + 1, k),
+                             idx(i, j, k + 1), idx(i + 1, j, k + 1), idx(i + 1, j + 1, k + 1),
+                             idx(i, j + 1, k + 1)])
+    return pos.tolist(), hexa
+
+
+def box_surface(xs, ys, zs):
+    """Superficie triangolata (normali uscenti) delle 6 facce di una griglia strutturata.
+
+    Restituisce (posizioni, triangoli); i vertici coincidono con i nodi di bordo della griglia.
+    """
+    nx, ny, nz = len(xs), len(ys), len(zs)
+    index, positions = {}, []
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                if i in (0, nx - 1) or j in (0, ny - 1) or k in (0, nz - 1):
+                    index[(i, j, k)] = len(positions)
+                    positions.append([float(xs[i]), float(ys[j]), float(zs[k])])
+    tris = []
+
+    def quad(c):
+        a, b, cc, d = (index[x] for x in c)
+        tris.extend([[a, b, cc], [a, cc, d]])
+
+    for j in range(ny - 1):
+        for k in range(nz - 1):
+            quad([(0, j, k), (0, j, k + 1), (0, j + 1, k + 1), (0, j + 1, k)])
+            quad([(nx - 1, j, k), (nx - 1, j + 1, k), (nx - 1, j + 1, k + 1), (nx - 1, j, k + 1)])
+    for i in range(nx - 1):
+        for k in range(nz - 1):
+            quad([(i, 0, k), (i + 1, 0, k), (i + 1, 0, k + 1), (i, 0, k + 1)])
+            quad([(i, ny - 1, k), (i, ny - 1, k + 1), (i + 1, ny - 1, k + 1), (i + 1, ny - 1, k)])
+    for i in range(nx - 1):
+        for j in range(ny - 1):
+            quad([(i, j, 0), (i, j + 1, 0), (i + 1, j + 1, 0), (i + 1, j, 0)])
+            quad([(i, j, nz - 1), (i + 1, j, nz - 1), (i + 1, j + 1, nz - 1), (i, j + 1, nz - 1)])
+    return positions, tris
+
+
 def check_tet_mesh(nodes, tetrahedra):
     """Diagnostica: conta tetraedri invertiti/degeneri e restituisce il volume minimo [mm^3]."""
     n = np.array(nodes)

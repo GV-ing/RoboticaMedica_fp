@@ -150,6 +150,43 @@ class GradedMeshTests(unittest.TestCase):
             self.assertTrue(np.all(np.isclose(radii, r_o) | np.isclose(radii, r_i)))
 
 
+class GradedBoxMeshTests(unittest.TestCase):
+    def test_graded_axis_and_box_mesh(self):
+        from modules.geometry_gen import box_hexa_mesh, box_surface, graded_axis
+
+        zs = graded_axis(-10.0, 10.0, 0.0, 0.4, 5.0, 1.4)
+        self.assertAlmostEqual(zs[0], -10.0)
+        self.assertAlmostEqual(zs[-1], 10.0)
+        self.assertIn(0.0, zs)
+        d = np.diff(zs)
+        self.assertTrue(np.all(d > 0))
+        self.assertAlmostEqual(d.min(), 0.4, places=9)
+        self.assertLessEqual(d.max(), 5.0 + 1e-9)
+
+        xs = graded_axis(80.0, 105.0, 100.0, 0.4, 5.0)
+        ys = graded_axis(1.0, 21.0, 1.0, 0.4, 5.0)
+        pos, hexa = box_hexa_mesh(xs, ys, zs)
+        p, h = np.array(pos), np.array(hexa)
+        self.assertEqual(len(p), len(xs) * len(ys) * len(zs))
+        vol = np.einsum("ij,ij->i", np.cross(p[h[:, 1]] - p[h[:, 0]], p[h[:, 3]] - p[h[:, 0]]),
+                        p[h[:, 4]] - p[h[:, 0]])
+        self.assertTrue(np.all(vol > 0))                       # orientamento positivo
+        self.assertAlmostEqual(vol.sum(), 25.0 * 20.0 * 20.0)  # volume del blocco
+
+        sp, st = box_surface(xs, ys, zs)
+        sp = np.array(sp)
+        on_face = (np.isclose(sp[:, 0], 80) | np.isclose(sp[:, 0], 105) |
+                   np.isclose(sp[:, 1], 1) | np.isclose(sp[:, 1], 21) |
+                   np.isclose(sp[:, 2], -10) | np.isclose(sp[:, 2], 10))
+        self.assertTrue(np.all(on_face))
+        edges = {}
+        for t in st:
+            for e in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                key = tuple(sorted(e))
+                edges[key] = edges.get(key, 0) + 1
+        self.assertEqual(set(edges.values()), {2})             # superficie chiusa
+
+
 class ContactForceProviderTests(unittest.TestCase):
     """read_contact_force legge constraintForces del solver ed esclude la riga del cavo."""
 

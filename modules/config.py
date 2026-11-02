@@ -36,15 +36,24 @@ NOMINAL_PARAMS = {
     "k_low": 0.6,               # Rigidezza bassa (Config. b - moto libero) [N/mm]
     "k_high": 4.8,              # Rigidezza alta (Config. b - in contatto) [N/mm]
     "k_direct": 50.0,           # Attuazione diretta di riferimento [N/mm]
-    "c_spring": 1.5,            # Smorzamento molla [N*s/mm]
+    "c_spring": 1.5,            # Smorzamento [N*s/mm]: agisce sul moto del tendine (-c*du1/dt)
     "Fh_spring": 0.45,          # Isteresi molla [N] (+/- 0.45 N)
     "switched_mode": False,     # False: config (a) k fissa; True: config (b) due livelli
 
     # Attuazione e Controllo
     "u_step": 0.35,             # Passo comando motore per pressione tasto [mm] (traccia: 0.35 mm)
     "manual_rate": 1.0,         # Velocita' massima risposta ai comandi manuali [mm/s]
-    "u_max": 8.0,               # Corsa massima in modo autonomo [mm]
-    "auto_rate": 1.0,           # Velocita' di u in modo autonomo [mm/s]
+    "u_max": 15.0,              # Corsa massima del carrello [mm] (glossario: 0-15 mm)
+    "auto_rate": 1.0,           # Velocita' di u nel ciclo autonomo [mm/s] (glossario: 0.5-2 mm/s)
+    "auto_hold_s": 0.0,         # Mantenimento a fine carico nel ciclo autonomo [s]
+    "auto_repeat": False,       # Ciclo autonomo ripetuto (True) o singolo (False)
+    "T_max": 10.0,              # Saturazione della tensione [N] (glossario)
+    "max_force_rate": 5.0,      # |dT/dt| massimo [N/s] (glossario, rate-limiter di sicurezza)
+    "dk_dt_max": 2.0,           # |dk/dt| massimo della molla a due livelli [N/mm/s] (glossario)
+    "dahl_sigma0": 10.0,        # Rigidezza di Dahl dell'isteresi [1/mm] (glossario: 5-20)
+    "hold_duration": 5.0,       # Durata della prova di stabilita' del contatto [s] (traccia)
+    "stability_ptp_max": 0.30,  # Oscillazione picco-picco massima / media (traccia: 30%)
+    "contact_loss_force": 1e-4, # Sotto questa forza [N] il contatto si considera perso
     "F_contact_th": 0.005,      # Soglia rilevamento contatto: 5 mN = 0.005 N
 
     # Ambiente di Contatto
@@ -55,6 +64,10 @@ NOMINAL_PARAMS = {
                                 #   confronto tra oggetti; H si misura comunque in moto libero
     "obj_overlap_x": 5.0,       # Quanto l'oggetto supera la punta lungo X [mm]
     "obj_grid_n": 5,            # Nodi per lato della griglia FEM dell'oggetto soffice
+    "soft_mesh": "graded",      # "graded" (fine al contatto) | "uniform" (obj_grid_n per lato)
+    "soft_h_min": 1.6,          # Passo minimo vicino al contatto [mm] (da studio di convergenza)
+    "soft_h_max": 5.0,          # Passo massimo lontano dal contatto [mm]
+    "soft_growth": 1.4,         # Fattore di crescita geometrica del passo
     "E_soft": 0.005,            # Oggetto soffice: 5 kPa = 0.005 MPa
     "poisson_soft": 0.45,       # Poisson oggetto soffice [-]
     "mu_friction": 0.2,         # Coefficiente di attrito [-]

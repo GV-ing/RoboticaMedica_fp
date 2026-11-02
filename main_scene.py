@@ -10,13 +10,36 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from modules.config import NOMINAL_PARAMS
 from modules.geometry_gen import (
+    box_hexa_mesh,
+    box_surface,
     create_hollow_tube_meshes,
+    graded_axis,
     check_tet_mesh,
     graded_x_vals,
     write_surface_obj,
 )
 from modules.controller import TendonSpringController
 from modules.contact_force import read_contact_force
+
+
+_COLLISION_MODELS = {
+    "triangle": "TriangleCollisionModel",
+    "line": "LineCollisionModel",
+    "point": "PointCollisionModel",
+}
+
+
+def _collision_model_names(names):
+    """Converte ('Point', 'Triangle', ...) nei componenti SOFA corrispondenti."""
+    if isinstance(names, str):
+        names = (names,)
+    try:
+        models = [_COLLISION_MODELS[str(n).lower()] for n in names]
+    except KeyError as exc:
+        raise ValueError(f"Modello di collisione sconosciuto: {exc}; usare Triangle/Line/Point")
+    if not models:
+        raise ValueError("Serve almeno un modello di collisione")
+    return models
 
 
 def createScene(rootNode, custom_params=None):
@@ -109,7 +132,7 @@ def createScene(rootNode, custom_params=None):
     )
     write_surface_obj(collision_obj_path, params["od"], params["thickness"],
                       collision_x_start, params["length_total"], params["collision_h"], n_theta)
-    bad, vmin, _ = check_tet_mesh(fem_nodes, tetrahedra)
+    bad, vmin, tube_volume = check_tet_mesh(fem_nodes, tetrahedra)
     if bad > 0:
         raise RuntimeError(f"Mesh tubo non valida: {bad} tetraedri invertiti/degeneri (vol min {vmin:.4g})")
 
@@ -123,7 +146,8 @@ def createScene(rootNode, custom_params=None):
 
     tubeNode.addObject("MeshTopology", name="topology", position=fem_nodes, tetrahedra=tetrahedra)
     tubeMeca = tubeNode.addObject("MechanicalObject", name="dofs", template="Vec3d")
-    tubeNode.addObject("UniformMass", name="mass", totalMass=1e-3)
+    # Massa reale dalla densita' (mm-N-s -> tonnellate): ~7.6e-7 t = 0.76 g per il tubo baseline
+    tubeNode.addObject("UniformMass", name="mass", totalMass=params["rho_tube"] * tube_volume)
 
     femFF = tubeNode.addObject(
         "TetrahedronFEMForceField",
@@ -168,9 +192,8 @@ def createScene(rootNode, custom_params=None):
     tubeCollisionNode.addObject("MeshOBJLoader", name="collisionLoader", filename=collision_obj_path)
     tubeCollisionNode.addObject("MeshTopology", src="@collisionLoader")
     tubeCollisionNode.addObject("MechanicalObject", name="dofs", src="@collisionLoader", template="Vec3d")
-    tubeCollisionNode.addObject("TriangleCollisionModel", group=0, simulated=True, moving=True)
-    tubeCollisionNode.addObject("LineCollisionModel", group=0, simulated=True, moving=True)
-    tubeCollisionNode.addObject("PointCollisionModel", group=0, simulated=True, moving=True)
+    for model in _collision_model_names(params["tube_collision_models"]):
+        tubeCollisionNode.addObject(model, group=0, simulated=True, moving=True)
     tubeCollisionNode.addObject("BarycentricMapping")
 
     # 7. Oggetto di contatto selezionabile.
@@ -185,51 +208,24 @@ def createScene(rootNode, custom_params=None):
 
         x_min = L - cube_size
         x_max = L + overlap_x
-        y_min = params["od"] / 2.0 + params["obj_gap"]
+        y_min = params["od"] / 2.0 + float(params["obj_gap"])
         y_max = y_min + cube_size
         z_min = -cube_size / 2.0
         z_max = cube_size / 2.0
 
-        x_coords = np.linspace(x_min, x_max, grid_n)
-        y_coords = np.linspace(y_min, y_max, grid_n)
-        z_coords = np.linspace(z_min, z_max, grid_n)
-        boundary_indices = {}
-        collision_positions = []
-        for i in range(grid_n):
-            for j in range(grid_n):
-                for k in range(grid_n):
-                    if i in (0, grid_n - 1) or j in (0, grid_n - 1) or k in (0, grid_n - 1):
-                        boundary_indices[(i, j, k)] = len(collision_positions)
-                        collision_positions.append([
-                            float(x_coords[i]),
-                            float(y_coords[j]),
-                            float(z_coords[k]),
-                        ])
-
-        collision_triangles = []
-
-        def add_collision_quad(corners):
-            a, b, c, d = (boundary_indices[corner] for corner in corners)
-            collision_triangles.extend([[a, b, c], [a, c, d]])
-
-        for j in range(grid_n - 1):
-            for k in range(grid_n - 1):
-                add_collision_quad([(0, j, k), (0, j, k + 1),
-                                    (0, j + 1, k + 1), (0, j + 1, k)])
-                add_collision_quad([(grid_n - 1, j, k), (grid_n - 1, j + 1, k),
-                                    (grid_n - 1, j + 1, k + 1), (grid_n - 1, j, k + 1)])
-        for i in range(grid_n - 1):
-            for k in range(grid_n - 1):
-                add_collision_quad([(i, 0, k), (i + 1, 0, k),
-                                    (i + 1, 0, k + 1), (i, 0, k + 1)])
-                add_collision_quad([(i, grid_n - 1, k), (i, grid_n - 1, k + 1),
-                                    (i + 1, grid_n - 1, k + 1), (i + 1, grid_n - 1, k)])
-        for i in range(grid_n - 1):
-            for j in range(grid_n - 1):
-                add_collision_quad([(i, j, 0), (i, j + 1, 0),
-                                    (i + 1, j + 1, 0), (i + 1, j, 0)])
-                add_collision_quad([(i, j, grid_n - 1), (i + 1, j, grid_n - 1),
-                                    (i + 1, j + 1, grid_n - 1), (i, j + 1, grid_n - 1)])
+        graded = contact_object == "soft" and params["soft_mesh"] == "graded"
+        if graded:
+            # Mesh graduata: passo soft_h_min sulla striscia di contatto (punta del tubo,
+            # faccia verso il tubo, piano z = 0), crescente fino a soft_h_max.
+            h_args = (params["soft_h_min"], params["soft_h_max"], params["soft_growth"])
+            xs = graded_axis(x_min, x_max, L, *h_args)
+            ys = graded_axis(y_min, y_max, y_min, *h_args)
+            zs = graded_axis(z_min, z_max, 0.0, *h_args)
+        else:
+            xs = np.linspace(x_min, x_max, grid_n)
+            ys = np.linspace(y_min, y_max, grid_n)
+            zs = np.linspace(z_min, z_max, grid_n)
+        collision_positions, collision_triangles = box_surface(xs, ys, zs)
 
         contactNode = rootNode.addChild(
             "SoftContactObject" if contact_object == "soft" else "RigidContactObject"
@@ -239,15 +235,24 @@ def createScene(rootNode, custom_params=None):
                                   rayleighStiffness=0.1, rayleighMass=0.1)
             contactNode.addObject("SparseLDLSolver", name="linearsolver",
                                   template="CompressedRowSparseMatrixMat3x3d")
-            contactNode.addObject(
-                "RegularGridTopology",
-                name="grid",
-                n=[grid_n, grid_n, grid_n],
-                min=[x_min, y_min, z_min],
-                max=[x_max, y_max, z_max],
-            )
-            contactNode.addObject("MechanicalObject", name="state", template="Vec3d")
-            contactNode.addObject("UniformMass", name="mass", totalMass=0.01)
+            if graded:
+                soft_pos, soft_hexa = box_hexa_mesh(xs, ys, zs)
+                contactNode.addObject("HexahedronSetTopologyContainer", name="grid",
+                                      position=soft_pos, hexahedra=soft_hexa)
+                contactNode.addObject("MechanicalObject", name="state", template="Vec3d",
+                                      position=soft_pos)
+            else:
+                contactNode.addObject(
+                    "RegularGridTopology",
+                    name="grid",
+                    n=[grid_n, grid_n, grid_n],
+                    min=[x_min, y_min, z_min],
+                    max=[x_max, y_max, z_max],
+                )
+                contactNode.addObject("MechanicalObject", name="state", template="Vec3d")
+            soft_volume = (x_max - x_min) * (y_max - y_min) * (z_max - z_min)
+            contactNode.addObject("UniformMass", name="mass",
+                                  totalMass=params["rho_soft"] * soft_volume)
             contactNode.addObject(
                 "HexahedronFEMForceField",
                 name="SoftFEM",
@@ -293,24 +298,13 @@ def createScene(rootNode, custom_params=None):
             template="Vec3d",
             position=collision_positions,
         )
-        collisionNode.addObject(
-            "TriangleCollisionModel",
-            group=1,
-            simulated=True,
-            moving=(contact_object == "soft"),
-        )
-        collisionNode.addObject(
-            "LineCollisionModel",
-            group=1,
-            simulated=True,
-            moving=(contact_object == "soft"),
-        )
-        collisionNode.addObject(
-            "PointCollisionModel",
-            group=1,
-            simulated=True,
-            moving=(contact_object == "soft"),
-        )
+        for model in _collision_model_names(params["object_collision_models"]):
+            collisionNode.addObject(
+                model,
+                group=1,
+                simulated=True,
+                moving=(contact_object == "soft"),
+            )
         if contact_object == "soft":
             collisionNode.addObject("BarycentricMapping")
         else:

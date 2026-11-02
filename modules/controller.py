@@ -1,8 +1,30 @@
 # modules/controller.py
+"""Controller da tastiera e autonomo del tubo a tendine con molla in serie (SofaPython3).
+
+Comandi (traccia: carico/scarico, reset, manuale/autonomo; a ogni comando stampa u, T, dLs, punta):
+    Freccia SU / U / +   carico   (+u_step)          Freccia GIU' / D / -   scarico (-u_step)
+    R                    reset                        M / A                  manuale <-> autonomo
+
+Ciclo autonomo (macchina a stati): 'load' a velocita' costante finche' T raggiunge T_max
+(o u = u_max) -> 'hold' per auto_hold_s secondi -> 'unload' fino a u = 0 -> 'done'
+(oppure di nuovo 'load' se auto_repeat). La fase e' registrata per separare carico e scarico.
+
+Convenzioni SOFA 26.06 verificate (tools/): al CableConstraint si impone l'impulso T*dt;
+cambiare youngModulus richiede reinit() del TetrahedronFEMForceField.
+"""
+
+import csv
 import logging
+import os
+
 import numpy as np
 import Sofa
 import Sofa.Core
+
+from modules.spring_model import SeriesSpring
+
+HISTORY_FIELDS = ("t", "phase", "u", "u_target", "u1", "dLs", "T", "k", "z",
+                  "E", "tip_x", "tip_y", "tip_z", "dY", "F_contact")
 
 
 class TendonSpringController(Sofa.Core.Controller):
@@ -21,62 +43,51 @@ class TendonSpringController(Sofa.Core.Controller):
     if not np.isfinite(self.force_scale) or self.force_scale <= 0.0:
       raise ValueError("force_scale deve essere un fattore positivo e finito")
 
-    # Variabili di stato cinematico e di attuazione
-    self.u = 0.0  # Spostamento carrello motore [mm]
-    self.u_target = 0.0  # Riferimento filtrato dal rate limiter [mm]
-    self.delta_Ls = 0.0  # Allungamento istantaneo molla SEA [mm]
-    self.prev_delta_Ls = 0.0
-    self.T = 0.0  # Tensione al cavo [N]
-    self.direction = 1.0  # Direzione reale di moto (+1 carico, -1 scarico)
-    self.auto_direction = 1.0
-    self.autonomous_mode = False
-
-    # Variabili per la prova di stabilità di contatto (Target: 20 mN per 5 s)
+    self.spring = SeriesSpring(self.params)
+    self.u = 0.0
+    self.u_target = 0.0
+    self.u1 = 0.0
+    self.T = 0.0
+    self.delta_Ls = 0.0
+    self.E_current = float(self.params["E_load"])
     self.contact_force_N = 0.0
-    self.contact_detected = False
-    self.contact_hold_timer = 0.0
-    self.hold_duration = 5.0  # Secondi di mantenimento richiesti
+    self.contact_read_errors = 0
+    self.time = 0.0
 
+    self.autonomous_mode = False
+    self.phase = "manual"
+    self.hold_timer = 0.0
+
+    self.initial_tip = None
+    self.history = {name: [] for name in HISTORY_FIELDS}
+    self.listeners = []   # callable(sample: dict) chiamati a ogni passo (grafici live)
     self._warned_missing_cable_displacement = False
 
-    # Cronologia e tracciamento
-    self.history_u = []
-    self.history_tip_y = []
-    self.history_tendon_force_N = []
-    self.history_contact_force_N = []
-    self.initial_tip_y = None
-
+  # ------------------------------------------------------------------ misure
   def get_tip_position(self):
-    """Calcola la posizione cartesiana media dei nodi di punta [mm]."""
+    """Posizione media dei nodi di punta [mm]."""
     pos = self.tube_meca.position.value
-    tip_pts = pos[self.tip_node_indices]
-    return np.mean(tip_pts, axis=0)
+    return np.mean(pos[self.tip_node_indices], axis=0)
 
   def get_tendon_displacement(self):
-    """Restituisce lo spostamento all'ancoraggio del cavo (u1) [mm]."""
-    tip_pos = self.get_tip_position()
+    """Spostamento del tendine a valle della molla u1 [mm] (CableConstraint.displacement)."""
     try:
       # In SoftRobots 26.06 'displacement' e' uno scalare: np.ravel gestisce scalare e vettore
-      cable_disp = float(np.ravel(self.cable.displacement.value)[0])
-      return max(0.0, cable_disp)
+      return max(0.0, float(np.ravel(self.cable.displacement.value)[0]))
     except (AttributeError, IndexError, TypeError, ValueError):
       if not self._warned_missing_cable_displacement:
-        logging.warning(
-            "CableConstraint.displacement non accessibile; uso approssimazione"
-            " geometrica."
-        )
+        logging.warning("CableConstraint.displacement non accessibile; uso u1 = 0.")
         self._warned_missing_cable_displacement = True
-      delta_y = max(0.0, tip_pos[1])
-      return (delta_y / self.params["length_flex"]) * self.params["yt_offset"]
+      return 0.0
 
   def read_contact_force(self):
-    """Legge la forza di contatto normale convertita in Newton [N]."""
+    """Forza normale di contatto [N] dal provider (modules/contact_force.py)."""
     if self.contact_force_provider is None:
       return 0.0
     try:
       force = float(self.contact_force_provider(self.root))
     except Exception as exc:  # errore di lettura: segnalato, non confuso con "nessun contatto"
-      self.contact_read_errors = getattr(self, "contact_read_errors", 0) + 1
+      self.contact_read_errors += 1
       if self.contact_read_errors == 1:
         logging.error("Lettura forza di contatto fallita (%s); uso 0 N. "
                       "Errori contati in contact_read_errors.", exc)
@@ -85,154 +96,128 @@ class TendonSpringController(Sofa.Core.Controller):
       raise ValueError(f"Forza di contatto non valida: {force}")
     return force * self.force_scale
 
+  # ------------------------------------------------------------------ stampa
   def print_state_feedback(self):
-    """Stampa a console le variabili richieste dal capitolato a ogni comando."""
     tip = self.get_tip_position()
-    delta_y = (
-        float(tip[1]) - self.initial_tip_y
-        if self.initial_tip_y is not None
-        else 0.0
-    )
+    dY = float(tip[1]) - float(self.initial_tip[1]) if self.initial_tip is not None else 0.0
     print(
-        f"[CONTROLLER] u: {self.u:.3f} mm | T: {self.T:.3f} N | "
-        f"dLs: {self.delta_Ls:.3f} mm | Punta: X={tip[0]:.3f}, Y={tip[1]:.4f}"
-        f" (dY={delta_y:.4f}), Z={tip[2]:.4f} mm | F_contatto:"
-        f" {self.contact_force_N * 1e3:.2f} mN"
+        f"[CONTROLLER] u: {self.u:.3f} mm (rif {self.u_target:.3f}) | T: {self.T:.3f} N | "
+        f"dLs: {self.delta_Ls:.3f} mm | k: {self.spring.k:.2f} N/mm | "
+        f"Punta: X={tip[0]:.3f}, Y={tip[1]:.4f} (dY={dY:.4f}), Z={tip[2]:.4f} mm | "
+        f"F_contatto: {self.contact_force_N * 1e3:.2f} mN"
     )
 
-  def update_actuation_physics(self, dt):
-    """Aggiorna le equazioni costitutive della molla in serie, isteresi e attuazione."""
-    # 1. Aggiornamento Young Modulus asimmetrico (Nitinol: E_load vs E_unload)
-    target_E = (
-        self.params["E_load"]
-        if self.direction >= 0
-        else self.params["E_unload"]
-    )
-    current_E = float(self.fem_ff.youngModulus.value[0])
-    if abs(current_E - target_E) > 10.0:
-      self.fem_ff.youngModulus.value = [target_E]
+  # ------------------------------------------------------------------ fisica
+  def _set_young_modulus(self, E):
+    if abs(E - self.E_current) > 1e-9:
+      self.fem_ff.youngModulus.value = [E]
       # TetrahedronFEMForceField NON ricalcola la rigidezza al solo cambio del Data:
       # serve reinit() (verificato con tools/check_scene.py: rapporto 1.000 -> 1.185).
       self.fem_ff.reinit()
+      self.E_current = E
 
-    # 2. Cinematica SEA: allungamento molla Delta L_s
-    delta_Lt = self.get_tendon_displacement()
-    self.delta_Ls = max(0.0, self.u - delta_Lt)
-    d_delta_Ls = (self.delta_Ls - self.prev_delta_Ls) / dt if dt > 0.0 else 0.0
-    self.prev_delta_Ls = self.delta_Ls
-
-    # 3. Logica di Rigidezza Molla: Configurazione (a) Fissa vs (b) Switched a due livelli
-    if self.params.get("switched_mode", False):
-      # Soglia di commutazione di specifica: 5 mN = 0.005 N
-      if self.contact_force_N >= self.params.get("F_contact_th", 0.005):
-        k = self.params["k_high"]  # 4.8 N/mm a contatto avvenuto
-      else:
-        k = self.params["k_low"]  # 0.6 N/mm in moto libero
-    else:
-      k = self.params["k_spring"]  # 1.2 N/mm costante
-
-    c = self.params["c_spring"]
-
-    # 4. Calcolo Tensione Tendine con regolarizzazione continua dell'Isteresi
-    if self.u <= 1e-4:
-      self.T = 0.0
-      self.delta_Ls = 0.0
-    else:
-      # Regolarizzazione tangenziale per prevenire gradini istantanei di forza (anti-scatto)
-      # sigma definisce la pendenza di transizione della frizione/isteresi interna
-      hyst_magnitude = self.params["Fh_spring"] + self.params["Fh_mat"]
-      hyst_smooth = hyst_magnitude * np.tanh(10.0 * self.direction)
-
-      raw_T = k * self.delta_Ls + c * d_delta_Ls + hyst_smooth
-      # Saturazione a T_max = 10.0 N come prescritto dalle specifiche generali
-      self.T = float(np.clip(raw_T, 0.0, self.params.get("T_max", 10.0)))
-
-    # Assegnazione del carico al vincolo di fune.
-    # Con FreeMotionAnimationLoop il solver dei vincoli lavora in IMPULSI
-    # (forza * dt): per applicare davvero la forza T [N] si impone T * dt.
-    # Verificato con tools/check_cable.py (cavo = value/dt, dipendenza lineare da 1/dt).
+  def update_actuation_physics(self, dt):
+    """Molla in serie -> tensione T sul cavo; E di carico o scarico secondo il verso di u."""
+    self.u1 = self.get_tendon_displacement()
+    self.T = self.spring.step(self.u, self.u1, self.contact_force_N, dt)
+    self.delta_Ls = self.spring.dL_s
+    self._set_young_modulus(
+        self.params["E_load"] if self.spring.direction >= 0 else self.params["E_unload"])
+    # Con FreeMotionAnimationLoop il valore del vincolo e' un IMPULSO: si impone T*dt.
     self.cable.value.value = [self.T * dt]
 
-    # Tracciamento telemetria
-    tip = self.get_tip_position()
-    if self.initial_tip_y is None:
-      self.initial_tip_y = float(tip[1])
-    self.history_u.append(self.u)
-    self.history_tip_y.append(float(tip[1]) - self.initial_tip_y)
-    self.history_tendon_force_N.append(self.T)
-
-  def onAnimateEndEvent(self, event):
-    self.contact_force_N = self.read_contact_force()
-    self.history_contact_force_N.append(self.contact_force_N)
+  def _autonomous_step(self, dt):
+    rate = self.params["auto_rate"]
+    if self.phase == "load":
+      self.u_target = min(self.params["u_max"], self.u_target + rate * dt)
+      if self.T >= self.spring.T_max * (1.0 - 1e-6) or self.u >= self.params["u_max"] - 1e-9:
+        self.u_target = self.u
+        self.phase = "hold" if self.params["auto_hold_s"] > 0 else "unload"
+        self.hold_timer = 0.0
+    elif self.phase == "hold":
+      self.hold_timer += dt
+      if self.hold_timer >= self.params["auto_hold_s"] - 1e-9:
+        self.phase = "unload"
+    elif self.phase == "unload":
+      self.u_target = max(0.0, self.u_target - rate * dt)
+      if self.u <= 1e-9 and self.u_target <= 0.0:
+        self.phase = "load" if self.params["auto_repeat"] else "done"
 
   def onAnimateBeginEvent(self, event):
-    dt = self.root.dt.value
-
-    # Gestione Ciclo Autonomo con Protocollo di Mantenimento Contatto
+    dt = float(self.root.dt.value)
+    if self.initial_tip is None:
+      self.initial_tip = np.array(self.get_tip_position(), dtype=float)
     if self.autonomous_mode:
-      f_target = 0.020  # Setpoint di contatto stabile: 20 mN = 0.020 N
-      f_thresh = self.params.get("F_contact_th", 0.005)  # 5 mN
-
-      # Rilevamento contatto durante la fase di carico
-      if self.auto_direction > 0 and self.contact_force_N >= f_thresh:
-        self.contact_detected = True
-
-      if self.contact_detected and self.contact_hold_timer < self.hold_duration:
-        # Micro-regolazione per mantenere la forza a 20 mN evitando penetrazione e sovra-forza
-        force_err = f_target - self.contact_force_N
-        # Piccola correzione proporzionale sulla posizione
-        self.u_target += 0.05 * force_err * dt
-        self.contact_hold_timer += dt
-      else:
-        # Procedura ordinaria di ciclo carico/scarico
-        self.u_target += self.auto_direction * self.params["auto_rate"] * dt
-
-        if self.u_target >= self.params["u_max"]:
-          self.u_target = self.params["u_max"]
-          self.auto_direction = -1.0
-          self.contact_detected = False
-          self.contact_hold_timer = 0.0
-        elif self.u_target <= 0.0:
-          self.u_target = 0.0
-          self.auto_direction = 1.0
-          self.contact_detected = False
-          self.contact_hold_timer = 0.0
-
-    # Rate Limiter per evitare comandi a gradino rigido
-    rate = (
-        self.params["auto_rate"]
-        if self.autonomous_mode
-        else self.params["manual_rate"]
-    )
-    max_step = rate * dt
-    error = self.u_target - self.u
-    previous_u = self.u
-    self.u += float(np.clip(error, -max_step, max_step))
-
-    # Calcolo direzione per modello isteresi
-    if self.u > previous_u + 1e-6:
-      self.direction = 1.0
-    elif self.u < previous_u - 1e-6:
-      self.direction = -1.0
-
+      self._autonomous_step(dt)
+      rate = self.params["auto_rate"]
+    else:
+      rate = self.params["manual_rate"]
+    # Velocita' del carrello limitata anche da |dT/dt| <= max_force_rate (glossario)
+    max_step = self.spring.max_motor_rate(rate) * dt
+    self.u += float(np.clip(self.u_target - self.u, -max_step, max_step))
     self.update_actuation_physics(dt)
+
+  def onAnimateEndEvent(self, event):
+    dt = float(self.root.dt.value)
+    self.time += dt
+    self.contact_force_N = self.read_contact_force()
+    tip = self.get_tip_position()
+    sample = {
+        "t": self.time, "phase": self.phase, "u": self.u, "u_target": self.u_target,
+        "u1": self.u1, "dLs": self.delta_Ls, "T": self.T, "k": self.spring.k,
+        "z": self.spring.z, "E": self.E_current,
+        "tip_x": float(tip[0]), "tip_y": float(tip[1]), "tip_z": float(tip[2]),
+        "dY": float(tip[1] - self.initial_tip[1]), "F_contact": self.contact_force_N,
+    }
+    for name in HISTORY_FIELDS:
+      self.history[name].append(sample[name])
+    for listener in self.listeners:
+      try:
+        listener(sample)
+      except Exception as exc:  # un grafico che fallisce non deve fermare la fisica
+        logging.warning("Listener disattivato dopo errore: %s", exc)
+        self.listeners.remove(listener)
+
+  # ------------------------------------------------------------------ comandi
+  def start_autonomous_cycle(self, hold_s=None, repeat=None):
+    if hold_s is not None:
+      self.params["auto_hold_s"] = float(hold_s)
+    if repeat is not None:
+      self.params["auto_repeat"] = bool(repeat)
+    self.autonomous_mode = True
+    self.phase = "load"
+    self.u_target = self.u
+
+  def reset(self):
+    self.autonomous_mode = False
+    self.phase = "manual"
+    self.u = self.u_target = 0.0
+    self.spring.reset()
+    self.T = 0.0
+    self.cable.value.value = [0.0]
+    self._set_young_modulus(self.params["E_load"])
+
+  def export_csv(self, path):
+    """Scrive la cronologia in CSV (una riga per passo)."""
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+      w = csv.writer(f)
+      w.writerow(HISTORY_FIELDS)
+      w.writerows(zip(*(self.history[n] for n in HISTORY_FIELDS)))
+    return path
 
   def onKeypressedEvent(self, event):
     key = str(event.get("key", ""))
-    step = self.params["u_step"]  # 0.35 mm da specifica baseline
-
-    # Codici SOFA standard e tasti alfanumerici
-    # Key 19: Freccia SU | Key 21: Freccia GIÙ
+    step = self.params["u_step"]
     is_up = key in ["19", "Up", "U", "u", "+"]
     is_down = key in ["21", "Down", "D", "d", "-"]
     is_reset = key in ["R", "r"]
     is_auto = key in ["M", "m", "A", "a"]
 
-    if is_up or is_down or is_reset:
-      if self.autonomous_mode:
-        self.autonomous_mode = False
-        self.u_target = self.u
-
+    if (is_up or is_down) and self.autonomous_mode:
+      self.autonomous_mode = False
+      self.phase = "manual"
+      self.u_target = self.u
     if is_up:
       self.u_target = min(self.params["u_max"], self.u_target + step)
       self.print_state_feedback()
@@ -240,18 +225,29 @@ class TendonSpringController(Sofa.Core.Controller):
       self.u_target = max(0.0, self.u_target - step)
       self.print_state_feedback()
     elif is_reset:
-      self.u_target = 0.0
-      self.u = 0.0
-      self.contact_detected = False
-      self.contact_hold_timer = 0.0
-      self.cable.value.value = [0.0]
+      self.reset()
       print("[CONTROLLER] Reset eseguito: u = 0.0 mm")
       self.print_state_feedback()
     elif is_auto:
-      self.autonomous_mode = not self.autonomous_mode
-      self.u_target = self.u
-      self.auto_direction = 1.0
-      self.contact_detected = False
-      self.contact_hold_timer = 0.0
+      if self.autonomous_mode:
+        self.autonomous_mode = False
+        self.phase = "manual"
+        self.u_target = self.u
+      else:
+        self.start_autonomous_cycle()
       state = "ATTIVATA" if self.autonomous_mode else "DISATTIVATA"
       print(f"[CONTROLLER] Modalita' autonoma: {state}")
+      self.print_state_feedback()
+
+  # ------------------------------------------------------------------ compatibilita'
+  @property
+  def history_tip_y(self):
+    return self.history["dY"]
+
+  @property
+  def history_tendon_force_N(self):
+    return self.history["T"]
+
+  @property
+  def history_contact_force_N(self):
+    return self.history["F_contact"]
