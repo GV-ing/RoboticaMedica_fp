@@ -56,7 +56,8 @@ class TendonSpringController(Sofa.Core.Controller):
     """Restituisce lo spostamento all'ancoraggio del cavo (u1) [mm]."""
     tip_pos = self.get_tip_position()
     try:
-      cable_disp = float(self.cable.displacement.value[0])
+      # In SoftRobots 26.06 'displacement' e' uno scalare: np.ravel gestisce scalare e vettore
+      cable_disp = float(np.ravel(self.cable.displacement.value)[0])
       return max(0.0, cable_disp)
     except (AttributeError, IndexError, TypeError, ValueError):
       if not self._warned_missing_cable_displacement:
@@ -74,11 +75,15 @@ class TendonSpringController(Sofa.Core.Controller):
       return 0.0
     try:
       force = float(self.contact_force_provider(self.root))
-      if not np.isfinite(force) or force < 0.0:
-        return 0.0
-      return force * self.force_scale
-    except Exception:
+    except Exception as exc:  # errore di lettura: segnalato, non confuso con "nessun contatto"
+      self.contact_read_errors = getattr(self, "contact_read_errors", 0) + 1
+      if self.contact_read_errors == 1:
+        logging.error("Lettura forza di contatto fallita (%s); uso 0 N. "
+                      "Errori contati in contact_read_errors.", exc)
       return 0.0
+    if not np.isfinite(force) or force < 0.0:
+      raise ValueError(f"Forza di contatto non valida: {force}")
+    return force * self.force_scale
 
   def print_state_feedback(self):
     """Stampa a console le variabili richieste dal capitolato a ogni comando."""
@@ -90,8 +95,8 @@ class TendonSpringController(Sofa.Core.Controller):
     )
     print(
         f"[CONTROLLER] u: {self.u:.3f} mm | T: {self.T:.3f} N | "
-        f"ΔLs: {self.delta_Ls:.3f} mm | Punta: X={tip[0]:.2f}, Y={tip[1]:.2f}"
-        f" (ΔY={delta_y:.2f}), Z={tip[2]:.2f} mm | F_contatto:"
+        f"dLs: {self.delta_Ls:.3f} mm | Punta: X={tip[0]:.3f}, Y={tip[1]:.4f}"
+        f" (dY={delta_y:.4f}), Z={tip[2]:.4f} mm | F_contatto:"
         f" {self.contact_force_N * 1e3:.2f} mN"
     )
 
@@ -106,6 +111,9 @@ class TendonSpringController(Sofa.Core.Controller):
     current_E = float(self.fem_ff.youngModulus.value[0])
     if abs(current_E - target_E) > 10.0:
       self.fem_ff.youngModulus.value = [target_E]
+      # TetrahedronFEMForceField NON ricalcola la rigidezza al solo cambio del Data:
+      # serve reinit() (verificato con tools/check_scene.py: rapporto 1.000 -> 1.185).
+      self.fem_ff.reinit()
 
     # 2. Cinematica SEA: allungamento molla Delta L_s
     delta_Lt = self.get_tendon_displacement()
@@ -246,4 +254,4 @@ class TendonSpringController(Sofa.Core.Controller):
       self.contact_detected = False
       self.contact_hold_timer = 0.0
       state = "ATTIVATA" if self.autonomous_mode else "DISATTIVATA"
-      print(f"[CONTROLLER] Modalità autonoma: {state}")
+      print(f"[CONTROLLER] Modalita' autonoma: {state}")

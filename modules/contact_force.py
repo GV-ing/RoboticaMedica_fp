@@ -1,44 +1,72 @@
-"""Read contact reaction forces exposed by SOFA's Lagrangian solver."""
+"""Lettura della forza di contatto dalle forze dei vincoli del constraint solver.
+
+Perche' non il campo ``lambda`` dei MechanicalObject: sui modelli di collisione mappati
+(oggetto soffice, tubo) ``lambda`` puo' contenere la reazione contata due volte
+(tools/check_soft_contact.py, tools/check_force_readout.py: rapporto esattamente 2.00
+rispetto alla forza ricavata dalla cinematica). Le ``constraintForces`` del solver sono
+invece la sorgente primaria e coincidono con il riferimento entro lo 0.5% sia sul rigido
+(equilibrio) sia sul soffice (cinematica).
+
+Convenzioni verificate in SOFA 26.06 con FreeMotionAnimationLoop:
+  * i valori dei vincoli sono IMPULSI [N*s]: forza = valore / dt;
+  * il CableConstraint occupa una riga, con valore uguale all'impulso imposto (T*dt);
+  * ogni punto di contatto con FrictionContactConstraint occupa 3 righe (n, t1, t2):
+    la forza normale e' la prima del blocco.
+"""
 
 import numpy as np
 
+SOLVER_NAME = "ConstraintSolver"
+CABLE_PATH = ("NitinolTube", "Tendon", "tendonCable")
+
+
+def _find_cable(root):
+    node = root
+    for name in CABLE_PATH[:-1]:
+        node = node.getChild(name) if node is not None else None
+    return node.getObject(CABLE_PATH[-1]) if node is not None else None
+
+
+def _cable_row(forces, cable_impulse):
+    """Indice della riga del cavo: quella uguale all'impulso imposto, altrimenti l'ultima."""
+    if cable_impulse is not None and abs(cable_impulse) > 0.0:
+        diff = np.abs(forces - cable_impulse)
+        idx = int(np.argmin(diff))
+        if diff[idx] <= 1e-9 + 1e-6 * abs(cable_impulse):
+            return idx
+    return forces.size - 1
+
+
+def contact_normal_impulses(root):
+    """Impulsi normali di contatto [N*s] (uno per punto di contatto)."""
+    solver = root.getObject(SOLVER_NAME)
+    if solver is None:
+        raise RuntimeError(f"Constraint solver '{SOLVER_NAME}' non trovato")
+    forces = np.asarray(solver.constraintForces.value, dtype=float).ravel()
+    if forces.size == 0:
+        return forces
+    if not np.all(np.isfinite(forces)):
+        raise ValueError("constraintForces contiene valori non finiti")
+
+    cable = _find_cable(root)
+    has_cable = cable is not None
+    if has_cable:
+        impulse = float(np.ravel(cable.value.value)[0])
+        forces = np.delete(forces, _cable_row(forces, impulse))
+    if forces.size % 3 != 0:
+        raise RuntimeError(
+            f"Righe di contatto non multiple di 3 ({forces.size}, cavo "
+            f"{'escluso' if has_cable else 'assente'}): verificare il tipo di risposta"
+        )
+    return forces[0::3]
+
 
 def read_contact_force(root):
-    """Return the contact's normal reaction force in newtons (lambda / dt).
-
-    The project places the contact object on the tube's +Y side, so the
-    contact normal is parallel to Y. Read the mapped collision MechanicalObject
-    lambda, following the installed SofaPython3 access_contact_forces example.
-    """
-    soft_node = root.getChild("SoftContactObject")
-    rigid_node = root.getChild("RigidContactObject")
-    contact_node = soft_node if soft_node is not None else rigid_node
-    if contact_node is None:
-        return 0.0
-
-    collision_node = contact_node.getChild("CollisionModel")
-    if collision_node is None:
-        raise RuntimeError("CollisionModel del contatto non trovato")
-    mechanical_object = collision_node.getObject("dofs")
-    if mechanical_object is None:
-        raise RuntimeError("MechanicalObject del contatto non trovato")
-
-    values = np.asarray(
-        mechanical_object.getData("lambda").value,
-        dtype=float,
-    )
-    if values.size == 0:
-        return 0.0
-    if values.size % 3 != 0:
-        raise RuntimeError(
-            f"lambda del modello di contatto ha forma non valida: {values.shape}"
-        )
-    reaction_vectors = values.reshape((-1, 3))
-    if not np.all(np.isfinite(reaction_vectors)):
-        raise ValueError("lambda del contatto contiene valori non finiti")
-
-    # lambda e' un IMPULSO [N*s] (FreeMotionAnimationLoop): forza = lambda / dt.
+    """Forza normale di contatto totale [N] (somma delle normali / dt)."""
     dt = float(root.dt.value)
     if not np.isfinite(dt) or dt <= 0.0:
         raise ValueError(f"dt non valido: {dt}")
-    return float(abs(np.sum(reaction_vectors[:, 1])) / dt)
+    normals = contact_normal_impulses(root)
+    if normals.size == 0:
+        return 0.0
+    return float(abs(np.sum(normals)) / dt)

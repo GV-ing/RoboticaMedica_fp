@@ -85,7 +85,7 @@ def run_levels(root, ctrl, cable, levels, t_ramp, t_hold, t_avg):
             cable.value.value = [float(T_i) * dt]  # impulso: forza T_i
             Sofa.Simulation.animate(root, dt)
             if i >= n_tot - n_avg:
-                raw.append(read_contact_force(root))  # gia' in N (lambda/dt)
+                raw.append(read_contact_force(root))  # gia' in N (constraintForces/dt)
                 dy.append(float(ctrl.get_tip_position()[1]) - tip0_y)
         raw = np.asarray(raw)
         rows.append({

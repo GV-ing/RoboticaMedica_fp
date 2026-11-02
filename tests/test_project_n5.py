@@ -151,15 +151,18 @@ class GradedMeshTests(unittest.TestCase):
 
 
 class ContactForceProviderTests(unittest.TestCase):
-    def test_reads_resultant_normal_reaction_from_contact_surface(self):
+    """read_contact_force legge constraintForces del solver ed esclude la riga del cavo."""
+
+    @staticmethod
+    def _fake_root(forces, cable_impulse, dt=0.01):
         class Data:
             def __init__(self, value):
                 self.value = value
 
-        class MechanicalObject:
-            def getData(self, name):
-                self.asserted_name = name
-                return Data([[1.0, 0.003, 2.0], [-1.0, -0.001, 1.0]])
+        class Obj:
+            def __init__(self, **data):
+                for k, v in data.items():
+                    setattr(self, k, Data(v))
 
         class Node:
             def __init__(self, children=None, objects=None):
@@ -172,15 +175,33 @@ class ContactForceProviderTests(unittest.TestCase):
             def getObject(self, name):
                 return self.objects.get(name)
 
-        dofs = MechanicalObject()
-        contact = Node(children={
-            "CollisionModel": Node(objects={"dofs": dofs}),
-        })
-        root = Node(children={"SoftContactObject": contact})
-        root.dt = Data(0.01)
-        # impulso 0.002 N*s su dt = 0.01 s -> forza 0.2 N
-        self.assertAlmostEqual(read_contact_force(root), 0.2)
-        self.assertEqual(dofs.asserted_name, "lambda")
+        tendon = Node(objects={"tendonCable": Obj(value=[cable_impulse])})
+        root = Node(
+            children={"NitinolTube": Node(children={"Tendon": tendon})},
+            objects={"ConstraintSolver": Obj(constraintForces=forces)},
+        )
+        root.dt = Data(dt)
+        return root
+
+    def test_sums_normal_rows_and_excludes_cable(self):
+        dt = 0.01
+        cable = 4.0 * dt  # T = 4 N imposta come impulso
+        # due contatti (n, t1, t2) + cavo in ultima riga
+        forces = [0.0003, 1e-5, -2e-5, 0.0002, 3e-5, 0.0, cable]
+        root = self._fake_root(forces, cable, dt)
+        self.assertAlmostEqual(read_contact_force(root), 0.05)  # (3e-4 + 2e-4) / 0.01
+
+    def test_cable_row_found_by_value_anywhere(self):
+        dt = 0.01
+        cable = 2.0 * dt
+        forces = [cable, 0.0001, 0.0, 0.0]
+        self.assertAlmostEqual(read_contact_force(self._fake_root(forces, cable, dt)), 0.01)
+
+    def test_no_contact_returns_zero_and_bad_rows_raise(self):
+        dt = 0.01
+        self.assertEqual(read_contact_force(self._fake_root([0.03], 0.03, dt)), 0.0)
+        with self.assertRaises(RuntimeError):
+            read_contact_force(self._fake_root([0.001, 0.0, 0.03], 0.03, dt))
 
 
 if __name__ == "__main__":

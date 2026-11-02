@@ -41,7 +41,7 @@ NOMINAL_PARAMS = {
     "switched_mode": False,     # False: config (a) k fissa; True: config (b) due livelli
 
     # Attuazione e Controllo
-    "u_step": 0.05,             # Passo comando motore per pressione tasto [mm]
+    "u_step": 0.35,             # Passo comando motore per pressione tasto [mm] (traccia: 0.35 mm)
     "manual_rate": 1.0,         # Velocita' massima risposta ai comandi manuali [mm/s]
     "u_max": 8.0,               # Corsa massima in modo autonomo [mm]
     "auto_rate": 1.0,           # Velocita' di u in modo autonomo [mm/s]
@@ -50,19 +50,31 @@ NOMINAL_PARAMS = {
     # Ambiente di Contatto
     "contact_object": "soft",   # "soft" | "rigid" | "none"
     "obj_size": 20.0,           # Dimensione caratteristica oggetto [mm]
-    "obj_gap": 0.10,            # Distanza iniziale punta-oggetto lungo Y [mm]
+    "obj_gap": 0.03,            # Gap punta-oggetto lungo Y [mm], UGUALE per rigido e soffice:
+                                #   contatto a T ~ 0.3 N (c = 0.0304 mm/N), stessa geometria per il
+                                #   confronto tra oggetti; H si misura comunque in moto libero
     "obj_overlap_x": 5.0,       # Quanto l'oggetto supera la punta lungo X [mm]
     "obj_grid_n": 5,            # Nodi per lato della griglia FEM dell'oggetto soffice
     "E_soft": 0.005,            # Oggetto soffice: 5 kPa = 0.005 MPa
     "poisson_soft": 0.45,       # Poisson oggetto soffice [-]
     "mu_friction": 0.2,         # Coefficiente di attrito [-]
-    "alarm_distance": 0.50,     # LocalMinDistance alarmDistance [mm]
+    "alarm_distance": 0.30,     # LocalMinDistance alarmDistance [mm] (> gap, < dimensione elementi)
     "contact_distance": 0.02,   # LocalMinDistance contactDistance [mm]
     "contact_target_force": 0.020,  # Forza di prova nella stabilita' di contatto: 20 mN (ipotesi)
     "force_scale": 1.0,         # Fattore di calibrazione lambda -> N (da verificare)
     "contact_stability_tolerance": 0.005,  # Tolleranza assoluta sul target forza [N]
     "random_seed": 2026,        # Seed per riproducibilita' delle realizzazioni
     "mc_output": "mc_results.json",
+
+    # Masse da densita' (unita' mm-N-s: massa in tonnellate, densita' in t/mm^3)
+    "rho_tube": 6.45e-9,        # Nitinol 6450 kg/m^3
+    "rho_soft": 1.0e-9,         # Oggetto soffice ~ tessuto/acqua 1000 kg/m^3
+
+    # Modelli di collisione (Triangle | Line | Point). Verificato con tools/check_scene.py:
+    # i modelli completi sono piu' veloci (432 vs 691 ms/passo) e stabili; i ridotti
+    # (solo Point vs Triangle) oscillano a forza elevata (61 mN p-p a T = 10 N).
+    "tube_collision_models": ("Triangle", "Line", "Point"),
+    "object_collision_models": ("Triangle", "Line", "Point"),
 
     # Simulazione e output
     "dt": 0.01,                 # Passo di integrazione temporale [s]
