@@ -1,0 +1,41 @@
+---------------------------------------
+Checking SOFA_ROOT and SOFAPYTHON3_ROOT
+Using environment variable SOFA_ROOT: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux
+---------------------------------------
+
+=== Prove di contatto (arresto a 30 mN o a fine corsa, 2.5 s + 5 s fermo) ===
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.AnimationLoop.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Detection.Algorithm.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Detection.Intersection.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Geometry.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Response.Contact.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Lagrangian.Correction.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Lagrangian.Solver.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Projective.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Engine.Select.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.IO.Mesh.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.LinearSolver.Direct.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Mapping.Linear.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Mass.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.ODESolver.Backward.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Setting.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.SolidMechanics.FEM.Elastic.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.StateContainer.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Constant.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Dynamic.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Grid.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Mapping.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Visual.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.GL.Component.Rendering3D.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/plugins/STLIB/lib/libSTLIB.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/plugins/SoftRobots/lib/libSoftRobots.so
+  rigid fixed   : arresto a F = 30.23 mN, T = 2.36 N; max nel mantenimento 30.28 mN
+                  F media =   30.28 mN  p-p/media = 0.000  perso = False  durata = 7.49 s  -> stabile = True  (range 10-50 mN: True, k finale 1.20)
+            814 passi, 204 s (250 ms/passo) -> /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_Project/results/contact_rigid_fixed.csv
+  rigid switched: arresto a F = 30.93 mN, T = 2.40 N; max nel mantenimento 86.10 mN
+                  F media =   86.10 mN  p-p/media = 0.000  perso = False  durata = 7.49 s  -> stabile = True  (range 10-50 mN: False, k finale 4.80)
+            806 passi, 321 s (398 ms/passo) -> /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_Project/results/contact_rigid_switched.csv
+[INFO]    [SofaPython3.Simulation] Sofa.Simulation unload()
+[INFO]    [SofaPython3] Clearing Sofa.Core cache...
+[INFO]    [SofaPython3.Core] Sofa.Core unload()
+[INFO]    [SofaPython3.Helper] Sofa.Helper unload()

@@ -1,0 +1,52 @@
+---------------------------------------
+Checking SOFA_ROOT and SOFAPYTHON3_ROOT
+Using environment variable SOFA_ROOT: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux
+---------------------------------------
+
+[0] Riferimento in moto libero
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.AnimationLoop.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Detection.Algorithm.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Detection.Intersection.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Geometry.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Collision.Response.Contact.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Lagrangian.Correction.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Lagrangian.Solver.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Constraint.Projective.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Engine.Select.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.IO.Mesh.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.LinearSolver.Direct.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Mapping.Linear.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Mass.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.ODESolver.Backward.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Setting.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.SolidMechanics.FEM.Elastic.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.StateContainer.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Constant.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Dynamic.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Container.Grid.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Topology.Mapping.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.Component.Visual.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/lib/libSofa.GL.Component.Rendering3D.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/plugins/STLIB/lib/libSTLIB.so
+[INFO]    [PluginManager] Loaded plugin: /home/giuliopc/SOFA_v26.06.00_Linux_Python3.12/SOFA_v26.06.00_Linux/plugins/SoftRobots/lib/libSoftRobots.so
+    c = 0.03041 mm/N
+
+[soffice graduato] h_min = 1.6 mm, 630 nodi
+     T |  F [mN] | F_kin [mN] | F/F_kin | p-p [mN] | x_c [mm] | ms/passo
+   2.0 |    1.65 |       1.66 |   0.997 |    0.000 |    93.14 |      764
+   6.0 |    5.91 |       5.93 |   0.996 |    0.000 |    92.74 |      672
+  10.0 |   10.15 |      10.20 |   0.995 |    0.000 |    92.67 |      596
+
+[soffice graduato] h_min = 0.8 mm, 1287 nodi
+     T |  F [mN] | F_kin [mN] | F/F_kin | p-p [mN] | x_c [mm] | ms/passo
+   2.0 |    1.40 |       1.40 |   0.996 |    0.000 |    92.85 |     1187
+   6.0 |    5.01 |       5.04 |   0.994 |    0.001 |    92.48 |     1158
+  10.0 |    8.57 |       8.66 |   0.990 |    0.000 |    92.40 |     1254
+
+[soffice graduato] h_min = 0.4 mm, 2640 nodi
+     T |  F [mN] | F_kin [mN] | F/F_kin | p-p [mN] | x_c [mm] | ms/passo
+   2.0 |    1.21 |       1.22 |   0.996 |    0.000 |    92.66 |     2443
+   6.0 |    4.33 |       4.38 |   0.989 |    0.000 |    92.30 |     2119
+  10.0 |    7.48 |       7.61 |   0.983 |    0.000 |    92.34 |     2949
+
+[soffice graduato] h_min = 0.2 mm, 4940 nodi
