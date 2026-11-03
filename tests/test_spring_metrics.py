@@ -59,12 +59,20 @@ class SpringModelTests(unittest.TestCase):
         expected = 2 * s.F_hyst_max / self.p["k_spring"]
         self.assertAlmostEqual(u_unload - u_load, expected, delta=0.03 * expected)
 
-    def test_switched_stiffness_is_slew_limited(self):
+    def test_switched_stiffness_jumps_instantly_tension_rate_limited(self):
         p = dict(self.p, switched_mode=True)
         s, out = run_cycle(p, contact_of_T=lambda T: 0.02 if T > 1.0 else 0.0)
+        k, T = out[:, 2].astype(float), out[:, 1].astype(float)
+        self.assertEqual(set(np.round(k, 9)), {p["k_low"], p["k_high"]})   # solo due livelli
+        jumps = np.flatnonzero(np.diff(k) != 0)
+        self.assertGreaterEqual(len(jumps), 1)
+        self.assertAlmostEqual(abs(np.diff(k)[jumps[0]]), p["k_high"] - p["k_low"])  # un passo
+        self.assertLessEqual(np.max(np.abs(np.diff(T))), p["max_force_rate"] * DT + 1e-12)
+
+    def test_slew_variant_still_available(self):
+        p = dict(self.p, switched_mode=True, k_switch_instant=False)
+        s, out = run_cycle(p, contact_of_T=lambda T: 0.02 if T > 1.0 else 0.0)
         k = out[:, 2].astype(float)
-        self.assertAlmostEqual(k.min(), p["k_low"])
-        self.assertAlmostEqual(k.max(), p["k_high"])
         self.assertLessEqual(np.max(np.abs(np.diff(k))), p["dk_dt_max"] * DT + 1e-12)
 
     def test_slack_spring_transmits_no_force(self):

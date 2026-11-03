@@ -9,8 +9,10 @@ Riferimenti: traccia del Progetto 5 e glossario del corso (GLOSSARIO_VARIABILI_E
     T*     = k * dL_s + F_hyst - c * du1/dt                    (c agisce sul moto del tendine)
     T      = T* limitata in velocita' (|dT/dt| <= max_force_rate) e saturata in [0, T_max]
 
-Configurazione (b) a due livelli: k tende a k_low in moto libero e a k_high quando la forza
-di contatto supera la soglia F_contact_th; la variazione di k e' limitata a dk/dt_max.
+Configurazione (b) a due livelli: k = k_low in moto libero e k = k_high quando la forza di
+contatto supera la soglia F_contact_th. La commutazione e' ISTANTANEA (indicazione del docente);
+resta il limite |dT/dt| <= max_force_rate sulla tensione (glossario, sicurezza). La variante
+con |dk/dt| <= dk_dt_max e' disponibile con k_switch_instant = False.
 
 Scelte di progetto (concordate):
   * smorzamento c fuori dalla legge della molla, sul moto del tendine (u1);
@@ -28,6 +30,7 @@ class SeriesSpring:
         self.k_low = float(params["k_low"])
         self.k_high = float(params["k_high"])
         self.F_th = float(params["F_contact_th"])
+        self.k_switch_instant = bool(params.get("k_switch_instant", True))
         self.dk_dt_max = float(params["dk_dt_max"])
         self.F_hyst_max = float(params["Fh_spring"]) + float(params["Fh_mat"])
         self.sigma0 = float(params["dahl_sigma0"])
@@ -79,9 +82,12 @@ class SeriesSpring:
             raise ValueError("dt deve essere positivo")
         self.update_dahl(u - self.u_prev)
 
-        dk = self.k_target(contact_force_N) - self.k
-        lim = self.dk_dt_max * dt
-        self.k += max(-lim, min(lim, dk))
+        k_new = self.k_target(contact_force_N)
+        if self.k_switch_instant:
+            self.k = k_new                      # commutazione istantanea (docente)
+        else:
+            lim = self.dk_dt_max * dt           # variante con slew-rate del glossario
+            self.k += max(-lim, min(lim, k_new - self.k))
 
         self.dL_s = max(0.0, u - u1)
         u1_dot = (u1 - self.u1_prev) / dt

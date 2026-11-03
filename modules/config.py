@@ -49,7 +49,8 @@ NOMINAL_PARAMS = {
     "auto_repeat": False,       # Ciclo autonomo ripetuto (True) o singolo (False)
     "T_max": 10.0,              # Saturazione della tensione [N] (glossario)
     "max_force_rate": 5.0,      # |dT/dt| massimo [N/s] (glossario, rate-limiter di sicurezza)
-    "dk_dt_max": 2.0,           # |dk/dt| massimo della molla a due livelli [N/mm/s] (glossario)
+    "k_switch_instant": True,   # Commutazione 0.6 <-> 4.8 N/mm istantanea (indicazione del docente)
+    "dk_dt_max": 2.0,           # |dk/dt| [N/mm/s] (glossario), usato solo se k_switch_instant = False
     "dahl_sigma0": 10.0,        # Rigidezza di Dahl dell'isteresi [1/mm] (glossario: 5-20)
     "hold_duration": 5.0,       # Finestra di valutazione della stabilita' [s] (traccia)
     "auto_stop_force": None,    # Se impostata [N], il carico autonomo si ferma a questa forza
@@ -95,7 +96,8 @@ NOMINAL_PARAMS = {
 
     # Simulazione e output
     "dt": 0.01,                 # Passo di integrazione temporale [s]
-    "live_plot": True,          # Grafici in tempo reale (processo matplotlib separato)
+    "live_plot": True,          # Grafici in tempo reale nella GUI (tools/live_plot_viewer.py)
+    "record_csv": True,         # Registrazione CSV nella GUI (results/gui_<data_ora>.csv)
     "plot_every": 5,            # Invia un punto ai grafici ogni N passi
     "print_every": 50,          # In modo autonomo stampa lo stato ogni N passi
 }

@@ -26,6 +26,8 @@ def run_task(task):
     from modules.protocols import CONFIGS, contact_test, free_cycle
 
     result = {k: task[k] for k in ("case_id", "realization", "config", "test")}
+    if task.get("tag"):
+        result["tag"] = task["tag"]
     if task.get("dry_run"):  # verifica della pipeline senza SOFA (metriche sintetiche)
         import math
         seed = sum(map(ord, task["case_id"]))

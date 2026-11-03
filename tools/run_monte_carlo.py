@@ -42,8 +42,12 @@ def load_done(path):
         with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line:
+                if not line:
+                    continue
+                try:
                     done.append(json.loads(line))
+                except json.JSONDecodeError:  # riga troncata (crash durante la scrittura)
+                    print(f"  riga non valida in {path} ignorata: il caso verra' rieseguito")
     return done
 
 
@@ -89,7 +93,14 @@ def main():
     ap.add_argument("--tests", nargs="+", default=["free", "rigid", "soft"],
                     choices=["free", "rigid", "soft"])
     ap.add_argument("--outdir", default=None)
+    ap.add_argument("--configs", nargs="+", default=["fixed", "switched", "direct"],
+                    choices=["fixed", "switched", "direct"])
     ap.add_argument("--resume", action="store_true")
+    ap.add_argument("--rerun", action="store_true",
+                    help="Con --resume: riesegue i casi selezionati (--configs/--tests) anche se "
+                         "gia' fatti; nel riepilogo il risultato nuovo sostituisce il vecchio")
+    ap.add_argument("--tag", default="",
+                    help="Etichetta salvata nei risultati (es. 'k_istantaneo')")
     ap.add_argument("--dry-run", action="store_true",
                     help="Verifica la pipeline con metriche sintetiche, senza SOFA")
     a = ap.parse_args()
@@ -112,16 +123,26 @@ def main():
         json.dump({"seed": a.seed, "count": a.count, "realizations": realizations}, f, indent=2)
 
     tasks = [t for t in build_tasks(realizations, os.path.join(outdir, "series"))
-             if t["test"] in a.tests]
+             if t["test"] in a.tests and t["config"] in a.configs]
     for t in tasks:
         t["dry_run"] = a.dry_run
+        t["tag"] = a.tag
     done = load_done(cases_path) if a.resume else []
+    if a.rerun and not a.resume:
+        sys.exit("--rerun richiede --resume (stessa cartella della campagna)")
+    selected = {t["case_id"] for t in tasks}
     done_ids = {r["case_id"] for r in done if "metrics" in r}
+    if a.rerun:
+        # da rifare: i casi selezionati non ancora rieseguiti con questa etichetta
+        # (cosi' una riesecuzione interrotta riprende senza ripetere i casi gia' rifatti)
+        redone = {r["case_id"] for r in done
+                  if "metrics" in r and a.tag and r.get("tag") == a.tag}
+        done_ids = (done_ids - selected) | (redone & selected)
     todo = [t for t in tasks if t["case_id"] not in done_ids]
     print(f"Campagna in {outdir}\n  casi totali {len(tasks)}, gia' fatti {len(done_ids)}, "
           f"da eseguire {len(todo)}, processi {a.workers}")
 
-    results = [r for r in done if "metrics" in r]
+    results = [r for r in done if "metrics" in r]  # in ordine: il piu' recente prevale
     t0 = time.time()
     if todo:
         ctx = mp.get_context("spawn")
