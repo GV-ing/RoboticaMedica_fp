@@ -96,7 +96,23 @@ NOMINAL_PARAMS = {
 
     # Simulazione e output
     "dt": 0.01,                 # Passo di integrazione temporale [s]
+    "cs_max_iterations": 500,   # BlockGaussSeidelConstraintSolver: iterazioni massime
+    "cs_tolerance": 1e-7,       # BlockGaussSeidelConstraintSolver: tolleranza
     "live_plot": True,          # Grafici in tempo reale nella GUI (tools/live_plot_viewer.py)
+    # Solo GUI (runSofa): profilo interattivo e vista amplificata. Non usati da script e MC.
+    "gui_fast": True,
+    # dt (0.01 s) e solver dei vincoli (500 iterazioni, tol 1e-7) restano quelli del
+    # Monte Carlo anche nella GUI: con tolleranza 1e-5 il contatto andava in chattering.
+    "gui_overrides": {
+        "mesh_h_flex": 0.8,     # tubo piu' leggero (rigidezza ~85% del valore convergente)
+        "soft_mesh": "uniform", "obj_grid_n": 5,   # soffice leggero
+        "collision_h": 2.0,     # meno punti di contatto
+        "manual_rate": 4.0,     # [mm/s] limitata comunque da |dT/dt| <= 5 N/s
+        "parallel_components": True,   # FEM e collisione multi-core (plugin MultiThreading)
+    },
+    "visual_amplification": 50.0,   # deformazioni mostrate x50 (1 = disattivata)
+    "display_flags": "showVisualModels",
+    "live_plot_python": None,   # Interprete del viewer (None = automatico: Python di sistema)
     "record_csv": True,         # Registrazione CSV nella GUI (results/gui_<data_ora>.csv)
     "plot_every": 5,            # Invia un punto ai grafici ogni N passi
     "print_every": 50,          # In modo autonomo stampa lo stato ogni N passi

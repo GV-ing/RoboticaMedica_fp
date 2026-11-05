@@ -44,8 +44,16 @@ def _collision_model_names(names):
 
 def createScene(rootNode, custom_params=None):
     params = NOMINAL_PARAMS.copy()
+    gui = custom_params is None               # runSofa chiama createScene(rootNode)
+    if gui and params.get("gui_fast", True):
+        # Profilo interattivo: mesh piu' leggere e motore piu' rapido (solo GUI/video).
+        # Script e Monte Carlo passano custom_params e usano sempre il modello validato.
+        params.update(params["gui_overrides"])
+        print(f"[GUI] profilo interattivo: {params['gui_overrides']}")
     if custom_params is not None:
         params.update(custom_params)
+    # Con la vista amplificata (solo GUI) la forma reale resta visibile in trasparenza
+    ghost_alpha = 0.25 if gui and params.get("visual_amplification", 1.0) > 1.0 else 1.0
     if params["contact_object"] not in {"soft", "rigid", "none"}:
         raise ValueError("contact_object deve essere 'soft', 'rigid' oppure 'none'")
 
@@ -80,24 +88,30 @@ def createScene(rootNode, custom_params=None):
         "Sofa.GL.Component.Rendering3D",
         "SoftRobots",
     ]
+    # Componenti paralleli (plugin MultiThreading): stessi algoritmi, calcolo su piu' core.
+    par = "Parallel" if params.get("parallel_components", False) else ""
+    if par:
+        plugins.append("MultiThreading")
     for p in plugins:
         rootNode.addObject("RequiredPlugin", name="req_" + p.replace(".", "_"), pluginName=p)
 
     # Camera e stile visivo
     rootNode.addObject("DefaultVisualManagerLoop")
+    # Solo modelli visivi: disegnare nodi FEM e force field rallenta molto la GUI (VM)
     rootNode.addObject("VisualStyle", name="visualStyle",
-                       displayFlags="showVisualModels showBehaviorModels showForceFields")
+                       displayFlags=params.get("display_flags", "showVisualModels"))
 
     # Loop di animazione e Constraint Solver
     rootNode.addObject("FreeMotionAnimationLoop", name="FreeMotionLoop")
     rootNode.addObject("BlockGaussSeidelConstraintSolver", name="ConstraintSolver",
-                       maxIterations=500, tolerance=1e-7,
+                       maxIterations=int(params.get("cs_max_iterations", 500)),
+                       tolerance=float(params.get("cs_tolerance", 1e-7)),
                        computeConstraintForces=True)
 
     # Pipeline di collisione e risposta con attrito mu = 0.2
     rootNode.addObject("CollisionPipeline", name="CollisionPipeline", depth=6)
-    rootNode.addObject("BruteForceBroadPhase", name="BroadPhase")
-    rootNode.addObject("BVHNarrowPhase", name="NarrowPhase")
+    rootNode.addObject(par + "BruteForceBroadPhase", name="BroadPhase")
+    rootNode.addObject(par + "BVHNarrowPhase", name="NarrowPhase")
     rootNode.addObject(
         "LocalMinDistance",
         name="LocalMinDistance",
@@ -150,7 +164,7 @@ def createScene(rootNode, custom_params=None):
     tubeNode.addObject("UniformMass", name="mass", totalMass=params["rho_tube"] * tube_volume)
 
     femFF = tubeNode.addObject(
-        "TetrahedronFEMForceField",
+        par + "TetrahedronFEMForceField",
         name="FEM",
         youngModulus=params["E_load"],
         poissonRatio=params["poisson"],
@@ -185,7 +199,7 @@ def createScene(rootNode, custom_params=None):
     # 6. Modello visivo
     visualNode = tubeNode.addChild("VisualModel")
     visualNode.addObject("MeshOBJLoader", name="objLoader", filename=obj_path)
-    visualNode.addObject("OglModel", name="Visual", src="@objLoader", color=[0.75, 0.78, 0.82, 1.0])
+    visualNode.addObject("OglModel", name="Visual", src="@objLoader", color=[0.75, 0.78, 0.82, ghost_alpha])
     visualNode.addObject("BarycentricMapping", name="visualMapping")
 
     tubeCollisionNode = tubeNode.addChild("CollisionModel")
@@ -254,7 +268,7 @@ def createScene(rootNode, custom_params=None):
             contactNode.addObject("UniformMass", name="mass",
                                   totalMass=params["rho_soft"] * soft_volume)
             contactNode.addObject(
-                "HexahedronFEMForceField",
+                par + "HexahedronFEMForceField",
                 name="SoftFEM",
                 topology="@grid",
                 youngModulus=params["E_soft"],
@@ -319,13 +333,13 @@ def createScene(rootNode, custom_params=None):
             "OglModel",
             name="Visual",
             src="@../CollisionModel/topology",
-            color=[0.85, 0.35, 0.25, 1.0],
+            color=[0.85, 0.35, 0.25, ghost_alpha if contact_object == "soft" else 1.0],
         )
         if contact_object == "soft":
             visualNode.addObject("BarycentricMapping")
 
     # 8. Controller Python
-    rootNode.addObject(
+    controller = rootNode.addObject(
         TendonSpringController(
             name="ActuationController",
             root=rootNode,
@@ -340,5 +354,23 @@ def createScene(rootNode, custom_params=None):
             ),
         )
     )
+
+    # 9. Solo nella GUI (runSofa chiama createScene senza custom_params): grafici in tempo
+    #    reale e registrazione CSV. Script e Monte Carlo passano custom_params -> disattivati.
+    if custom_params is None:
+        if params.get("visual_amplification", 1.0) > 1.0:
+            from modules.amplified_view import add_amplified_view
+            soft_surface = ((collision_positions, collision_triangles)
+                            if contact_object == "soft" else None)
+            add_amplified_view(rootNode, params["visual_amplification"], obj_path, soft_surface)
+        from modules.amplified_view import StepTimer
+        rootNode.addObject(StepTimer(name="StepTimer", every=50))
+        from modules.controller import HISTORY_FIELDS
+        from modules.live_plot import CsvRecorder, LivePlotListener
+        if params.get("record_csv", True):
+            controller.listeners.append(CsvRecorder(HISTORY_FIELDS))
+        if params.get("live_plot", True):
+            controller.listeners.append(LivePlotListener(every=params["plot_every"],
+                                                         python=params.get("live_plot_python")))
 
     return rootNode
