@@ -12,11 +12,9 @@ from modules.config import NOMINAL_PARAMS
 from modules.geometry_gen import (
     box_hexa_mesh,
     box_surface,
-    create_hollow_tube_meshes,
-    graded_axis,
+    build_tube_meshes,
     check_tet_mesh,
-    graded_x_vals,
-    write_surface_obj,
+    contact_object_axes,
 )
 from modules.controller import TendonSpringController
 from modules.contact_force import read_contact_force
@@ -149,27 +147,13 @@ def createScene(rootNode, custom_params=None):
 
     # 3. Mesh del tubo: FEM graduata (fine sulla parte flessibile) e superfici separate,
     #    piu' grossolane, per i modelli visivo e di collisione (BarycentricMapping).
-    mesh_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meshes")
-    fem_obj_path = os.path.join(mesh_dir, "tube_fem_surface.obj")
-    obj_path = os.path.join(mesh_dir, "tube_surface.obj")            # modello visivo
-    collision_obj_path = os.path.join(mesh_dir, "tube_collision.obj")  # modello di collisione
-    n_theta = int(params["mesh_n_theta"])
-    fem_nodes, tetrahedra = create_hollow_tube_meshes(
-        obj_filepath=fem_obj_path,
-        od=params["od"],
-        thickness=params["thickness"],
-        n_theta=n_theta,
-        x_vals=graded_x_vals(params["length_total"], params["length_shaft"],
-                             params["mesh_h_flex"], int(params["mesh_n_shaft"])),
-    )
-    write_surface_obj(obj_path, params["od"], params["thickness"],
-                      0.0, params["length_total"], params["visual_h"], n_theta)
-    collision_x_start = max(
-        params["length_shaft"],
-        params["length_total"] - params["obj_size"] - params["collision_margin"],
-    )
-    write_surface_obj(collision_obj_path, params["od"], params["thickness"],
-                      collision_x_start, params["length_total"], params["collision_h"], n_theta)
+    # Mesh rigenerate a ogni avvio con i parametri correnti (anche profilo GUI): cartella di
+    # lavoro meshes/scena/ (ignorata da git). Le mesh nominali da consegnare le scrive
+    # tools/generate_meshes.py direttamente in meshes/.
+    mesh_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meshes", "scena")
+    fem_nodes, tetrahedra, mesh_files = build_tube_meshes(params, mesh_dir)
+    obj_path = mesh_files["visual"]
+    collision_obj_path = mesh_files["collision"]
     bad, vmin, tube_volume = check_tet_mesh(fem_nodes, tetrahedra)
     if bad > 0:
         raise RuntimeError(f"Mesh tubo non valida: {bad} tetraedri invertiti/degeneri (vol min {vmin:.4g})")
@@ -244,25 +228,8 @@ def createScene(rootNode, custom_params=None):
         if cube_size <= 0 or overlap_x < 0 or grid_n < 2:
             raise ValueError("obj_size > 0, obj_overlap_x >= 0 e obj_grid_n >= 2 richiesti")
 
-        x_min = L - cube_size
-        x_max = L + overlap_x
-        y_min = params["od"] / 2.0 + float(params["obj_gap"])
-        y_max = y_min + cube_size
-        z_min = -cube_size / 2.0
-        z_max = cube_size / 2.0
-
-        graded = contact_object == "soft" and params["soft_mesh"] == "graded"
-        if graded:
-            # Mesh graduata: passo soft_h_min sulla striscia di contatto (punta del tubo,
-            # faccia verso il tubo, piano z = 0), crescente fino a soft_h_max.
-            h_args = (params["soft_h_min"], params["soft_h_max"], params["soft_growth"])
-            xs = graded_axis(x_min, x_max, L, *h_args)
-            ys = graded_axis(y_min, y_max, y_min, *h_args)
-            zs = graded_axis(z_min, z_max, 0.0, *h_args)
-        else:
-            xs = np.linspace(x_min, x_max, grid_n)
-            ys = np.linspace(y_min, y_max, grid_n)
-            zs = np.linspace(z_min, z_max, grid_n)
+        xs, ys, zs, bounds, graded = contact_object_axes(params)
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds
         collision_positions, collision_triangles = box_surface(xs, ys, zs)
 
         contactNode = rootNode.addChild(

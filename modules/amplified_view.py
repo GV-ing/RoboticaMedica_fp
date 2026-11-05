@@ -12,8 +12,6 @@ dalla traccia) resta nella scena, reso semitrasparente come "ombra" della forma 
 fornisce le posizioni reali da amplificare.
 """
 
-import time
-
 import numpy as np
 import Sofa
 import Sofa.Core
@@ -69,26 +67,3 @@ def add_amplified_view(root, factor, tube_obj_path, soft_surface=None):
     print(f"[VISTA AMPLIFICATA] deformazioni mostrate x{factor:g} (solo grafica; "
           f"forma reale in trasparenza)")
 
-
-class StepTimer(Sofa.Core.Controller):
-    """Stampa ogni `every` passi il costo medio di un passo e quanto la GUI e' piu' lenta
-    del tempo reale (diagnostica, solo GUI)."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.every = int(kwargs.get("every", 50))
-        self.n = 0
-        self.t0 = None
-
-    def onAnimateEndEvent(self, event):
-        now = time.perf_counter()
-        if self.t0 is None:
-            self.t0 = now
-            return
-        self.n += 1
-        if self.n >= self.every:
-            step = (now - self.t0) / self.n
-            dt = float(self.getContext().dt.value)
-            print(f"[TEMPO] {1000*step:.0f} ms/passo, dt = {dt:g} s -> "
-                  f"{step/dt:.1f}x piu' lento del tempo reale")
-            self.n, self.t0 = 0, now

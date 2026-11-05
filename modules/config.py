@@ -36,8 +36,9 @@ NOMINAL_PARAMS = {
     "k_low": 0.6,               # Livello basso della config. (b) [N/mm]
     "k_high": 4.8,              # Livello alto della config. (b) [N/mm]
     # Scelta degli studenti (traccia): quale livello in moto libero. "high": 4.8 libero /
-    # 0.6 in contatto; "low": 0.6 libero / 4.8 in contatto (ordine della campagna mc_finale).
-    "k_free_level": "high",
+    # 0.6 in contatto; "low": 0.6 libero / 4.8 in contatto (scelto: ordine della campagna mc_finale;
+    # con "high" H nominale sale a 27.3 %, come l'attuazione diretta).
+    "k_free_level": "low",
     "k_direct": 50.0,           # Attuazione diretta di riferimento [N/mm]
     "c_spring": 1.5,            # Smorzamento [N*s/mm]: agisce sul moto del tendine (-c*du1/dt)
     "Fh_spring": 0.45,          # Isteresi molla [N] (+/- 0.45 N)
@@ -73,7 +74,7 @@ NOMINAL_PARAMS = {
     "obj_overlap_x": 5.0,       # Quanto l'oggetto supera la punta lungo X [mm]
     "obj_grid_n": 5,            # Nodi per lato della griglia FEM dell'oggetto soffice
     "soft_mesh": "graded",      # "graded" (fine al contatto) | "uniform" (obj_grid_n per lato)
-    "soft_h_min": 1.6,          # Passo minimo al contatto [mm]: compromesso costo/accuratezza (soft_mesh_convergence)
+    "soft_h_min": 1.6,          # Passo minimo al contatto [mm]: compromesso costo/accuratezza (studio di convergenza)
     "soft_h_max": 5.0,          # Passo massimo lontano dal contatto [mm]
     "soft_growth": 1.4,         # Fattore di crescita geometrica del passo
     "E_soft": 0.005,            # Oggetto soffice: 5 kPa = 0.005 MPa
@@ -91,7 +92,7 @@ NOMINAL_PARAMS = {
     "rho_tube": 6.45e-9,        # Nitinol 6450 kg/m^3
     "rho_soft": 1.0e-9,         # Oggetto soffice ~ tessuto/acqua 1000 kg/m^3
 
-    # Modelli di collisione (Triangle | Line | Point). Verificato con tools/check_scene.py:
+    # Modelli di collisione (Triangle | Line | Point). Verificato durante lo sviluppo:
     # i modelli completi sono piu' veloci (432 vs 691 ms/passo) e stabili; i ridotti
     # (solo Point vs Triangle) oscillano a forza elevata (61 mN p-p a T = 10 N).
     "tube_collision_models": ("Triangle", "Line", "Point"),

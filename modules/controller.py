@@ -10,7 +10,7 @@ u = u_max o (se impostata) la forza di contatto raggiunge auto_stop_force -> 'ho
 auto_hold_s secondi -> 'unload' fino a u = 0 -> 'done'
 (oppure di nuovo 'load' se auto_repeat). La fase e' registrata per separare carico e scarico.
 
-Convenzioni SOFA 26.06 verificate (tools/): al CableConstraint si impone l'impulso T*dt;
+Convenzioni SOFA 26.06 verificate durante lo sviluppo: al CableConstraint si impone l'impulso T*dt;
 cambiare youngModulus richiede reinit() del TetrahedronFEMForceField.
 """
 
@@ -113,7 +113,7 @@ class TendonSpringController(Sofa.Core.Controller):
     if abs(E - self.E_current) > 1e-9:
       self.fem_ff.youngModulus.value = [E]
       # TetrahedronFEMForceField NON ricalcola la rigidezza al solo cambio del Data:
-      # serve reinit() (verificato con tools/check_scene.py: rapporto 1.000 -> 1.185).
+      # serve reinit() (verificato durante lo sviluppo: rapporto 1.000 -> 1.185).
       self.fem_ff.reinit()
       self.E_current = E
 

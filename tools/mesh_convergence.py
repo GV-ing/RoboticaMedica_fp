@@ -13,7 +13,7 @@ Riporta il rapporto SOFA/teoria, l'estrapolazione di Richardson sulle tre mesh
 piu' fitte, il tempo medio per passo (moto libero e, se richiesto, con contatto
 rigido) e una stima della durata della campagna Monte Carlo.
 
-Convenzione verificata (tools/check_cable.py): il valore del CableConstraint e'
+Convenzione verificata durante lo sviluppo: il valore del CableConstraint e'
 un impulso, quindi si impone T*dt.
 
 Esecuzione (cartella SOFA_Project, variabili d'ambiente del README):

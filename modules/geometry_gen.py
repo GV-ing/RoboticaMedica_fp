@@ -247,10 +247,90 @@ def check_tet_mesh(nodes, tetrahedra):
     return int((v <= 1e-12).sum()), float(v.min()), float(v.sum())
 
 
+
+def build_tube_meshes(params, mesh_dir):
+    """Mesh del tubo usate dalla scena: FEM tetraedrica graduata e due OBJ di superficie.
+
+    - meshes/tube_fem_surface.obj : superficie della mesh FEM (controllo)
+    - meshes/tube_surface.obj     : modello visivo (passo visual_h)
+    - meshes/tube_collision.obj   : modello di collisione (solo tratto vicino alla punta)
+    Restituisce (nodi FEM, tetraedri, dizionario dei percorsi).
+    """
+    fem_obj_path = os.path.join(mesh_dir, "tube_fem_surface.obj")
+    obj_path = os.path.join(mesh_dir, "tube_surface.obj")
+    collision_obj_path = os.path.join(mesh_dir, "tube_collision.obj")
+    n_theta = int(params["mesh_n_theta"])
+    fem_nodes, tetrahedra = create_hollow_tube_meshes(
+        obj_filepath=fem_obj_path,
+        od=params["od"],
+        thickness=params["thickness"],
+        n_theta=n_theta,
+        x_vals=graded_x_vals(params["length_total"], params["length_shaft"],
+                             params["mesh_h_flex"], int(params["mesh_n_shaft"])),
+    )
+    write_surface_obj(obj_path, params["od"], params["thickness"],
+                      0.0, params["length_total"], params["visual_h"], n_theta)
+    collision_x_start = max(
+        params["length_shaft"],
+        params["length_total"] - params["obj_size"] - params["collision_margin"],
+    )
+    write_surface_obj(collision_obj_path, params["od"], params["thickness"],
+                      collision_x_start, params["length_total"], params["collision_h"], n_theta)
+    return fem_nodes, tetrahedra, {"fem_surface": fem_obj_path, "visual": obj_path,
+                                   "collision": collision_obj_path}
+
+
+def contact_object_axes(params):
+    """Coordinate dei nodi dell'oggetto di contatto (cubo di lato obj_size davanti alla punta).
+
+    Soffice "graded": passo soft_h_min sulla zona di contatto, crescente fino a soft_h_max;
+    altrimenti griglia uniforme obj_grid_n. Restituisce (xs, ys, zs, limiti, graduata).
+    """
+    L = params["length_total"]
+    cube_size = float(params["obj_size"])
+    grid_n = int(params["obj_grid_n"])
+    x_min, x_max = L - cube_size, L + float(params["obj_overlap_x"])
+    y_min = params["od"] / 2.0 + float(params["obj_gap"])
+    y_max = y_min + cube_size
+    z_min, z_max = -cube_size / 2.0, cube_size / 2.0
+    graded = params["contact_object"] == "soft" and params["soft_mesh"] == "graded"
+    if graded:
+        h_args = (params["soft_h_min"], params["soft_h_max"], params["soft_growth"])
+        xs = graded_axis(x_min, x_max, L, *h_args)
+        ys = graded_axis(y_min, y_max, y_min, *h_args)
+        zs = graded_axis(z_min, z_max, 0.0, *h_args)
+    else:
+        xs = np.linspace(x_min, x_max, grid_n)
+        ys = np.linspace(y_min, y_max, grid_n)
+        zs = np.linspace(z_min, z_max, grid_n)
+    return xs, ys, zs, (x_min, x_max, y_min, y_max, z_min, z_max), graded
+
+
+def write_vtk_tetra(path, nodes, tetrahedra):
+    """Mesh volumetrica tetraedrica in formato VTK legacy (apribile con ParaView)."""
+    _write_vtk(path, nodes, tetrahedra, cell_type=10)
+
+
+def write_vtk_hexa(path, nodes, hexahedra):
+    """Mesh volumetrica esaedrica in formato VTK legacy (apribile con ParaView)."""
+    _write_vtk(path, nodes, hexahedra, cell_type=12)
+
+
+def _write_vtk(path, nodes, cells, cell_type):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    nodes = np.asarray(nodes, dtype=float)
+    cells = np.asarray(cells, dtype=int)
+    n_per = cells.shape[1]
+    with open(path, "w", encoding="ascii") as f:
+        f.write("# vtk DataFile Version 3.0\nProgetto 5 - mesh volumetrica\nASCII\n"
+                "DATASET UNSTRUCTURED_GRID\n")
+        f.write(f"POINTS {len(nodes)} double\n")
+        for p in nodes:
+            f.write(f"{p[0]:.6f} {p[1]:.6f} {p[2]:.6f}\n")
+        f.write(f"CELLS {len(cells)} {len(cells) * (n_per + 1)}\n")
+        for c in cells:
+            f.write(f"{n_per} " + " ".join(str(int(i)) for i in c) + "\n")
+        f.write(f"CELL_TYPES {len(cells)}\n" + f"{cell_type}\n" * len(cells))
+
 if __name__ == "__main__":
-    out_obj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "meshes", "tube_surface.obj")
-    nodes, tetras = create_hollow_tube_meshes(out_obj)
-    bad, vmin, vtot = check_tet_mesh(nodes, tetras)
-    print(f"Mesh tetraedrica generata! Nodi FEM: {len(nodes)}, Tetraedri: {len(tetras)}")
-    print(f"Tetraedri invertiti/degeneri: {bad} (atteso 0) | volume min: {vmin:.4f} mm^3 | volume tot: {vtot:.3f} mm^3")
-    print(f"File OBJ salvato in: {os.path.abspath(out_obj)}")
+    print("Per generare le mesh del progetto usare: python3 tools/generate_meshes.py")

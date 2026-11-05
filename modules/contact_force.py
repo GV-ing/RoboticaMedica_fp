@@ -2,7 +2,7 @@
 
 Perche' non il campo ``lambda`` dei MechanicalObject: sui modelli di collisione mappati
 (oggetto soffice, tubo) ``lambda`` puo' contenere la reazione contata due volte
-(tools/check_soft_contact.py, tools/check_force_readout.py: rapporto esattamente 2.00
+(verificato durante lo sviluppo: rapporto esattamente 2.00
 rispetto alla forza ricavata dalla cinematica). Le ``constraintForces`` del solver sono
 invece la sorgente primaria e coincidono con il riferimento entro lo 0.5% sia sul rigido
 (equilibrio) sia sul soffice (cinematica).
