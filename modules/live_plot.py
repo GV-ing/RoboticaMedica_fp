@@ -27,7 +27,7 @@ def _viewer_env():
     env = dict(os.environ)
     for var in ("PYTHONPATH", "PYTHONHOME", "LD_LIBRARY_PATH"):
         env.pop(var, None)
-    env["PYTHONPATH"] = PROJECT_DIR          # serve solo per modules.plot_style
+    env["PYTHONPATH"] = PROJECT_DIR          # modules.config e modules.metrics (puri, numpy)
     return env
 
 

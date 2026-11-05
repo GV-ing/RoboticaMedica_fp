@@ -50,6 +50,30 @@ def createScene(rootNode, custom_params=None):
         # Script e Monte Carlo passano custom_params e usano sempre il modello validato.
         params.update(params["gui_overrides"])
         print(f"[GUI] profilo interattivo: {params['gui_overrides']}")
+    if gui:
+        # Scelta di oggetto e molla dal launcher (run_gui.sh --object ... --spring ...)
+        obj = os.environ.get("P5_OBJECT")
+        if obj:
+            params["contact_object"] = obj
+        spring = os.environ.get("P5_SPRING")
+        if spring:
+            springs = {"fixed": {"switched_mode": False},
+                       "switched": {"switched_mode": True},
+                       "direct": {"switched_mode": False, "k_spring": params["k_direct"]}}
+            if spring not in springs:
+                raise ValueError("P5_SPRING deve essere 'fixed', 'switched' oppure 'direct'")
+            params.update(springs[spring])
+        order = os.environ.get("P5_K_FREE")
+        if order:
+            if order not in ("high", "low"):
+                raise ValueError("P5_K_FREE deve essere 'high' (4.8 libero) o 'low' (0.6 libero)")
+            params["k_free_level"] = order
+        if params["switched_mode"]:
+            k_f, k_c = ((params["k_high"], params["k_low"]) if params["k_free_level"] == "high"
+                        else (params["k_low"], params["k_high"]))
+            print(f"[GUI] molla a due livelli: {k_f} N/mm in moto libero, {k_c} N/mm in contatto")
+        print(f"[GUI] oggetto: {params['contact_object']} | molla: "
+              f"{'due livelli 0.6/4.8 N/mm' if params['switched_mode'] else str(params['k_spring']) + ' N/mm'}")
     if custom_params is not None:
         params.update(custom_params)
     # Con la vista amplificata (solo GUI) la forma reale resta visibile in trasparenza
@@ -363,8 +387,6 @@ def createScene(rootNode, custom_params=None):
             soft_surface = ((collision_positions, collision_triangles)
                             if contact_object == "soft" else None)
             add_amplified_view(rootNode, params["visual_amplification"], obj_path, soft_surface)
-        from modules.amplified_view import StepTimer
-        rootNode.addObject(StepTimer(name="StepTimer", every=50))
         from modules.controller import HISTORY_FIELDS
         from modules.live_plot import CsvRecorder, LivePlotListener
         if params.get("record_csv", True):

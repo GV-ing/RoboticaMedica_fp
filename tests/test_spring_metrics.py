@@ -69,6 +69,15 @@ class SpringModelTests(unittest.TestCase):
         self.assertAlmostEqual(abs(np.diff(k)[jumps[0]]), p["k_high"] - p["k_low"])  # un passo
         self.assertLessEqual(np.max(np.abs(np.diff(T))), p["max_force_rate"] * DT + 1e-12)
 
+    def test_switching_order_follows_k_free_level(self):
+        F = lambda T: 0.02 if T > 1.0 else 0.0
+        for level, k_free, k_contact in (("high", 4.8, 0.6), ("low", 0.6, 4.8)):
+            p = dict(self.p, switched_mode=True, k_free_level=level)
+            s, out = run_cycle(p, contact_of_T=F)
+            k = out[:, 2].astype(float)
+            self.assertAlmostEqual(k[0], k_free)                     # moto libero
+            self.assertIn(k_contact, set(np.round(k, 9)))            # dopo il contatto
+
     def test_slew_variant_still_available(self):
         p = dict(self.p, switched_mode=True, k_switch_instant=False)
         s, out = run_cycle(p, contact_of_T=lambda T: 0.02 if T > 1.0 else 0.0)

@@ -33,8 +33,11 @@ NOMINAL_PARAMS = {
     # Molla in Serie
     "L0_spring": 20.0,          # Lunghezza a riposo molla [mm]
     "k_spring": 1.2,            # Rigidezza fissa (Config. a) [N/mm]
-    "k_low": 0.6,               # Rigidezza bassa (Config. b - moto libero) [N/mm]
-    "k_high": 4.8,              # Rigidezza alta (Config. b - in contatto) [N/mm]
+    "k_low": 0.6,               # Livello basso della config. (b) [N/mm]
+    "k_high": 4.8,              # Livello alto della config. (b) [N/mm]
+    # Scelta degli studenti (traccia): quale livello in moto libero. "high": 4.8 libero /
+    # 0.6 in contatto; "low": 0.6 libero / 4.8 in contatto (ordine della campagna mc_finale).
+    "k_free_level": "high",
     "k_direct": 50.0,           # Attuazione diretta di riferimento [N/mm]
     "c_spring": 1.5,            # Smorzamento [N*s/mm]: agisce sul moto del tendine (-c*du1/dt)
     "Fh_spring": 0.45,          # Isteresi molla [N] (+/- 0.45 N)

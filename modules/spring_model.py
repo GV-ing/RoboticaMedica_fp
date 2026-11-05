@@ -9,8 +9,9 @@ Riferimenti: traccia del Progetto 5 e glossario del corso (GLOSSARIO_VARIABILI_E
     T*     = k * dL_s + F_hyst - c * du1/dt                    (c agisce sul moto del tendine)
     T      = T* limitata in velocita' (|dT/dt| <= max_force_rate) e saturata in [0, T_max]
 
-Configurazione (b) a due livelli: k = k_low in moto libero e k = k_high quando la forza di
-contatto supera la soglia F_contact_th. La commutazione e' ISTANTANEA (indicazione del docente);
+Configurazione (b) a due livelli: k = k_free in moto libero e k = k_contact quando la forza di
+contatto supera la soglia F_contact_th; k_free_level ("high"/"low") sceglie quale dei due livelli
+(k_high = 4.8, k_low = 0.6 N/mm) si usa in moto libero. La commutazione e' ISTANTANEA (indicazione del docente);
 resta il limite |dT/dt| <= max_force_rate sulla tensione (glossario, sicurezza). La variante
 con |dk/dt| <= dk_dt_max e' disponibile con k_switch_instant = False.
 
@@ -29,6 +30,12 @@ class SeriesSpring:
         self.k_fixed = float(params["k_spring"])
         self.k_low = float(params["k_low"])
         self.k_high = float(params["k_high"])
+        level = params.get("k_free_level", "low")
+        if level not in ("low", "high"):
+            raise ValueError("k_free_level deve essere 'low' oppure 'high'")
+        # Livelli scelti dagli studenti: k in moto libero e k dopo il rilevamento del contatto
+        self.k_free = self.k_high if level == "high" else self.k_low
+        self.k_contact = self.k_low if level == "high" else self.k_high
         self.F_th = float(params["F_contact_th"])
         self.k_switch_instant = bool(params.get("k_switch_instant", True))
         self.dk_dt_max = float(params["dk_dt_max"])
@@ -47,7 +54,7 @@ class SeriesSpring:
     # ------------------------------------------------------------------ stato
     def reset(self):
         self.z = 0.0
-        self.k = self.k_low if self.switched else self.k_fixed
+        self.k = self.k_free if self.switched else self.k_fixed
         self.T = 0.0
         self.T_star = 0.0
         self.dL_s = 0.0
@@ -58,7 +65,7 @@ class SeriesSpring:
     def k_target(self, contact_force_N):
         if not self.switched:
             return self.k_fixed
-        return self.k_high if contact_force_N >= self.F_th else self.k_low
+        return self.k_contact if contact_force_N >= self.F_th else self.k_free
 
     # ------------------------------------------------------------------ Dahl
     def update_dahl(self, du):
