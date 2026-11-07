@@ -114,7 +114,7 @@ NOMINAL_PARAMS = {
         "manual_rate": 4.0,     # [mm/s] limitata comunque da |dT/dt| <= 5 N/s
         "parallel_components": True,   # FEM e collisione multi-core (plugin MultiThreading)
     },
-    "visual_amplification": 50.0,   # deformazioni mostrate x50 (1 = disattivata)
+    "visual_amplification": 1.0,   # deformazioni mostrate x50 (1 = disattivata)
     "display_flags": "showVisualModels",
     "live_plot_python": None,   # Interprete del viewer (None = automatico: Python di sistema)
     "record_csv": True,         # Registrazione CSV nella GUI (results/gui_<data_ora>.csv)
